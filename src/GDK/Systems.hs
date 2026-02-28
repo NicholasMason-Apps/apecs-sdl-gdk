@@ -1,30 +1,30 @@
-module GDK.Systems where
+module GDK.Systems (initialise, run, defaultConfig) where
 
 import Apecs
 import GDK.Types
-import Language.Haskell.TH.Syntax
 import qualified SDL
 import qualified SDL.Font as TTF
 import qualified SDL.Image as IMG
 import qualified Data.Text as T
-import Data.Word (Word8)
 import System.Exit (exitSuccess)
 import Control.Monad (unless)
+import qualified SDL.Raw
 
-initialise :: String -- ^ Window title
-           -> (Int, Int) -- ^ Initial window dimensions (width, height)
+initialise :: Config -- ^ Game config
            -> IO (SDL.Window, SDL.Renderer) -- ^ Returns the created window and renderer contexts
-initialise title (w,h) = do
+initialise config = do
     SDL.initialize [SDL.InitVideo]
     TTF.initialize
     IMG.initialize []
-    let windowConfig = SDL.defaultWindow { SDL.windowInitialSize = SDL.V2 (fromIntegral w) (fromIntegral h),
+    let (w,h) = windowDimensions config
+        title = windowTitle config
+        windowConfig = SDL.defaultWindow { SDL.windowInitialSize = SDL.V2 (fromIntegral w) (fromIntegral h),
                                            SDL.windowMode = SDL.Windowed,
                                            SDL.windowResizable = False }
     window <- SDL.createWindow (T.pack title) windowConfig
 
     let rendererConfig = SDL.defaultRenderer { SDL.rendererType = SDL.AcceleratedVSyncRenderer,
-                                               SDL.rendererTargetTexture = False }
+                                               SDL.rendererTargetTexture = True }
     renderer <- SDL.createRenderer window (-1) rendererConfig
 
     return (window, renderer)
@@ -32,31 +32,48 @@ initialise title (w,h) = do
 run :: w -- ^ Initial world state
      -> SDL.Renderer -- ^ SDL renderer context
      -> SDL.Window -- ^ SDL window context
-     -> SDL.V4 Word8 -- ^ Background color for the renderer (RGBA)
+     -> Config -- ^ Game config
      -> (Float -> System w ()) -- ^ World step function
      -> ([SDL.EventPayload] -> System w ()) -- ^ Event handler
      -> (SDL.Renderer -> FPS -> System w ()) -- ^ Draw function, receives the renderer and current FPS
      -> IO ()
-run world r w c step eventHandler draw = do
-    SDL.showWindow w
-    let loop prevTicks tickAcc fpsAcc = do
+run w r window c step eventHandler draw = do
+    SDL.showWindow window
+    let loop prevTicks prevPerf tickAcc fpsAcc = do
             ticks <- SDL.ticks
+            perf <- SDL.Raw.getPerformanceCounter
+            freq <- SDL.Raw.getPerformanceFrequency
             payload <- map SDL.eventPayload <$> SDL.pollEvents
             let quit = SDL.QuitEvent `elem` payload
                 dt = ticks - prevTicks
                 tickAcc' = tickAcc + dt
                 avgFps = 1000.0 / (fromIntegral tickAcc' / fromIntegral fpsAcc)
-            runSystem (eventHandler payload) world
-            runSystem (step $ fromIntegral dt / 1000) world
-            SDL.rendererDrawColor r SDL.$= c
+                elapsed = fromIntegral (perf - prevPerf) / fromIntegral freq * 1000
+            runSystem (eventHandler payload) w
+            runSystem (do
+                stepAnimations dt
+                step $ fromIntegral dt / 1000) w
+            SDL.rendererDrawColor r SDL.$= backgroundColor c
             SDL.clear r
-            runSystem (draw r (round avgFps)) world
+            runSystem (draw r (round avgFps)) w
             SDL.present r
-            unless quit $ loop ticks tickAcc' (fpsAcc + 1)
-    loop 0 0 0
+            SDL.delay $ floor ((1000 / fromIntegral (targetFPS c)) - elapsed)
+            unless quit $ loop ticks perf tickAcc' (fpsAcc + 1)
+    loop 0 0 0 0
     SDL.destroyRenderer r
-    SDL.destroyWindow w
+    SDL.destroyWindow window
     TTF.quit
     IMG.quit
     SDL.quit
     exitSuccess
+
+defaultConfig :: Config
+defaultConfig = Config
+    { windowTitle = "GDK Game"
+    , windowDimensions = (800, 600)
+    , backgroundColor = SDL.V4 0 0 0 255
+    , targetFPS = 60
+    }
+
+stepAnimations :: Float -> System w ()
+stepAnimations dt = return ()
