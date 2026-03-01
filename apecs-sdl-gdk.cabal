@@ -25,6 +25,7 @@ source-repository head
 
 library
   exposed-modules:
+      GDK.Draw
       GDK.Font
       GDK.Systems
       GDK.Texture

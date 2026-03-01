@@ -10,6 +10,10 @@ import Apecs
 import qualified Data.Map as Map
 import Control.Monad.IO.Class (MonadIO)
 
+{-|
+Represents a texture in the game, which may be static or animated.
+Note that animations must be stored as a horizontal [sprite sheet](https://www.aseprite.org/docs/sprite-sheet/).
+-}
 data TextureData = TextureData
     { texture :: SDL.Texture
     , animation :: Maybe Animation

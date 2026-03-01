@@ -2,7 +2,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module GDK.Font (FontMap(..), loadFont) where
+module GDK.Font (FontMap(..), TextData(..), loadFont) where
 
 import qualified SDL.Font as TTF
 import Apecs
@@ -12,6 +12,12 @@ import Control.Monad.IO.Class (MonadIO)
 -- | Stores the SDL fonts loaded in the game, mapped by their identifiers
 newtype FontMap = FontMap (Map.Map String TTF.Font)
 instance Component FontMap where type Storage FontMap = Map FontMap
+
+data TextData = TextData
+    { fontRef :: String
+    , text :: String
+    , colour :: TTF.Color
+    } deriving (Show, Eq)
 
 loadFont :: forall w m. (Has w m FontMap, MonadIO m) 
          => FilePath

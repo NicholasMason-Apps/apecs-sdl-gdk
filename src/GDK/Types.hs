@@ -9,13 +9,12 @@
 
 module GDK.Types (Config(..)
                  , Renderable(..)
-                 , RenderLayers(..)
                  , FPS
+                 , Position(..)
                  , Time(..)) where
 
 import qualified SDL
 import Apecs
-import qualified Data.Vector as V
 import Data.Word (Word8)
 
 type FPS = Int
@@ -29,6 +28,9 @@ data Config = Config
         targetFPS :: FPS -- ^ Desired FPS for the game loop
     }
 
+-- class Component a => Renderable a where
+--     render :: SDL.Renderer -> Position -> a -> IO ()
+
 -- | Represents an entity that can be rendered, containing a reference to its texture and optional animation data
 data Renderable = Renderable
     { textureRef :: String
@@ -39,22 +41,12 @@ data Renderable = Renderable
     -- ^ Frame index for animations, if applicable
     } deriving (Eq, Show)
 
+newtype Position = Position (SDL.V2 Float)
+instance Component Position where type Storage Position = Map Position
+
 newtype Time = Time Float deriving (Show, Eq, Num)
 instance Semigroup Time where
     (Time t1) <> (Time t2) = Time (t1 + t2)
 instance Monoid Time where
     mempty = Time 0
 instance Component Time where type Storage Time = Global Time
-
-{-|
-A global component which stores in a Vector a 'Texture' for each render layer.
-The index of the vector corresponds to the render layer, so the texture at index 0 is the texture for render layer 0, and so on.
-Lower layers are drawn first, and therefore can appear behind higher layers.
-The texture for each layer is cleared at the start of each frame, and 'Renderables' are drawn onto the appropriate layer texture during the draw phase of the game loop.
--}
-newtype RenderLayers = RenderLayers (V.Vector SDL.Texture)
-instance Semigroup RenderLayers where
-    (RenderLayers q1) <> (RenderLayers q2) = RenderLayers (q1 V.++ q2)
-instance Monoid RenderLayers where
-    mempty = RenderLayers V.empty
-instance Component RenderLayers where type Storage RenderLayers = Global RenderLayers

@@ -18,9 +18,11 @@ import qualified SDL.Raw
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
 import Control.Monad.IO.Class (MonadIO)
+import GDK.Draw (RenderLayers)
+import System.Exit (exitSuccess)
 
-initialise :: MonadIO m => Config -- ^ Game config
-           -> m (SDL.Window, SDL.Renderer) -- ^ Returns the created window and renderer contexts
+initialise :: Config -- ^ Game config
+           -> IO (SDL.Window, SDL.Renderer) -- ^ Returns the created window and renderer contexts
 initialise config = do
     SDL.initialize [SDL.InitVideo]
     TTF.initialize
@@ -38,21 +40,21 @@ initialise config = do
 
     return (window, renderer)
 
-run :: forall w m. 
-     (Has w m Time
-     , Has w m TextureMap
-     , Get w m Renderable
-     , Set w m Renderable
-     , Members w m Renderable
-     , MonadIO m)
+run :: forall w. 
+     (Has w IO Time
+     , Has w IO TextureMap
+     , Has w IO Position
+     , Get w IO Renderable
+     , Set w IO Renderable
+     , Members w IO Renderable)
      => w -- ^ Initial world state
      -> SDL.Renderer -- ^ SDL renderer context
      -> SDL.Window -- ^ SDL window context
      -> Config -- ^ Game config
-     -> (Float -> SystemT w m ()) -- ^ World step function
-     -> ([SDL.EventPayload] -> SystemT w m ()) -- ^ Event handler
-     -> (SDL.Renderer -> FPS -> SystemT w m ()) -- ^ Draw function, receives the renderer and current FPS
-     -> m ()
+     -> (Float -> System w ()) -- ^ World step function
+     -> ([SDL.EventPayload] -> System w ()) -- ^ Event handler
+     -> (SDL.Renderer -> FPS -> System w ()) -- ^ Draw function, receives the renderer and current FPS
+     -> IO ()
 run w r window c step eventHandler draw = do
     SDL.showWindow window
     let loop prevTicks prevPerf tickAcc fpsAcc = do
@@ -81,7 +83,7 @@ run w r window c step eventHandler draw = do
     TTF.quit
     IMG.quit
     SDL.quit
-    -- exitSuccess
+    exitSuccess
 
 defaultConfig :: Config
 defaultConfig = Config
@@ -92,17 +94,16 @@ defaultConfig = Config
     }
 
 makeWorld' :: [Name] -> Q [Dec]
-makeWorld' cTypes = makeWorld "World" (cTypes ++ [''TextureMap, ''FontMap, ''RenderLayers, ''Time])
+makeWorld' cTypes = makeWorld "World" (cTypes ++ [''TextureMap, ''FontMap, ''Position, ''Time])
 
-stepAnimations :: forall w m. 
-                (Has w m Time
-                , Has w m TextureMap
-                , Get w m Renderable
-                , Set w m Renderable
-                , Members w m Renderable
-                , MonadIO m) 
+stepAnimations :: forall w. 
+                (Has w IO Time
+                , Has w IO TextureMap
+                , Get w IO Renderable
+                , Set w IO Renderable
+                , Members w IO Renderable)
                 => Float 
-                -> SystemT w m ()
+                -> System w ()
 stepAnimations dt = cmapM $ \r -> do
     Time t <- get global
     TextureMap m <- get global
