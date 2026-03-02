@@ -17,8 +17,6 @@ import Control.Monad (unless)
 import qualified SDL.Raw
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
-import Control.Monad.IO.Class (MonadIO)
-import GDK.Draw (RenderLayers)
 import System.Exit (exitSuccess)
 
 initialise :: Config -- ^ Game config

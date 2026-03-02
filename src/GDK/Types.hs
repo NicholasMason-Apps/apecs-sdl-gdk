@@ -16,6 +16,8 @@ module GDK.Types (Config(..)
 import qualified SDL
 import Apecs
 import Data.Word (Word8)
+import GDK.Texture (RenTexture)
+import GDK.Font (RenText)
 
 type FPS = Int
 
@@ -31,15 +33,10 @@ data Config = Config
 -- class Component a => Renderable a where
 --     render :: SDL.Renderer -> Position -> a -> IO ()
 
--- | Represents an entity that can be rendered, containing a reference to its texture and optional animation data
-data Renderable = Renderable
-    { textureRef :: String
-    -- ^ Identifier for the texture to render
-    , layer :: Int
-    -- ^ layer for draw order
-    , animationFrame :: Maybe Int
-    -- ^ Frame index for animations, if applicable
-    } deriving (Eq, Show)
+-- | Represents an entity that can be rendered
+data Renderable = RenderableTexture RenTexture
+                | RenderableText RenText
+                deriving (Eq, Show)
 
 newtype Position = Position (SDL.V2 Float)
 instance Component Position where type Storage Position = Map Position

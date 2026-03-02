@@ -2,7 +2,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module GDK.Font (FontMap(..), TextData(..), loadFont) where
+module GDK.Font (FontMap(..), RenText(..), loadFont) where
 
 import qualified SDL.Font as TTF
 import Apecs
@@ -13,10 +13,11 @@ import Control.Monad.IO.Class (MonadIO)
 newtype FontMap = FontMap (Map.Map String TTF.Font)
 instance Component FontMap where type Storage FontMap = Map FontMap
 
-data TextData = TextData
+data RenText = RenText
     { fontRef :: String
     , text :: String
     , colour :: TTF.Color
+    , layer :: Int
     } deriving (Show, Eq)
 
 loadFont :: forall w m. (Has w m FontMap, MonadIO m) 

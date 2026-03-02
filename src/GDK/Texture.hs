@@ -2,7 +2,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module GDK.Texture (TextureData(..), Animation(..), TextureMap(..), loadTexture) where
+module GDK.Texture (TextureData(..), Animation(..), TextureMap(..), RenTexture(..), loadTexture) where
 
 import qualified SDL.Image as IMG
 import qualified SDL
@@ -27,6 +27,16 @@ data Animation = Animation
     , next :: String
     -- ^ Identifier of the next texture to transition to after this one finishes
     } deriving (Show, Eq)
+
+-- | Represents a Texture for rendering
+data RenTexture = RenTexture
+    { textureRef :: String
+    -- ^ Identifier for the texture to render
+    , layer :: Int
+    -- ^ layer for draw order
+    , animationFrame :: Maybe Int
+    -- ^ Frame index for animations, if applicable
+    } deriving (Eq, Show)
 
 -- | Stores the SDL textures loaded in the game, mapped by their identifiers
 newtype TextureMap = TextureMap (Map.Map String TextureData)

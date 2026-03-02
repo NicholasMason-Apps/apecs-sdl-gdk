@@ -7,7 +7,7 @@ import qualified SDL.Font as TTF
 import Apecs
 import GDK.Types
 import GDK.Texture
-import GDK.Font (TextData(..))
+import GDK.Font (RenText(..))
 import Control.Monad.IO.Class (MonadIO)
 import qualified Data.Vector as V
 import qualified Data.Text as T
@@ -18,7 +18,8 @@ This function is the typical draw function to pass to 'run', however you are fre
 -}
 draw :: SDL.Renderer -> FPS -> System w ()
 draw renderer fps = return ()
-    -- let layers = V.empty :: V.Vector SDL.Texture
+    let layers = V.empty :: V.Vector SDL.Texture
+    
 
 {-|
 Draw a 'Texture' given its 'TextureData' and 'Position'
@@ -40,8 +41,8 @@ drawTexture r (TextureData t _) (Position pos) _ = do
         pos' = SDL.Rectangle (SDL.P (round <$> pos)) (SDL.V2 w h)
     liftIO $ SDL.copy r t Nothing (Just pos')
 
--- | Draw text given its 'TextData', 'Font' and 'Position'
-drawText :: SDL.Renderer -> TextData -> TTF.Font -> Position -> System w ()
+-- | Draw text given its 'RenText', 'Font' and 'Position'
+drawText :: SDL.Renderer -> RenText -> TTF.Font -> Position -> System w ()
 drawText r t font (Position pos) = do
     (tex, size) <- generateSolidText r font (colour t) (text t)
     SDL.copy r tex Nothing (Just $ SDL.Rectangle (SDL.P (round <$> pos)) (fromIntegral <$> size))
@@ -65,9 +66,9 @@ The index of the vector corresponds to the render layer, so the texture at index
 Lower layers are drawn first, and therefore can appear behind higher layers.
 The texture for each layer is cleared at the start of each frame, and 'Renderables' are drawn onto the appropriate layer texture during the draw phase of the game loop.
 -}
-newtype RenderLayers = RenderLayers (V.Vector SDL.Texture)
-instance Semigroup RenderLayers where
-    (RenderLayers q1) <> (RenderLayers q2) = RenderLayers (q1 V.++ q2)
-instance Monoid RenderLayers where
-    mempty = RenderLayers V.empty
-instance Component RenderLayers where type Storage RenderLayers = Global RenderLayers
+-- newtype RenderLayers = RenderLayers (V.Vector SDL.Texture)
+-- instance Semigroup RenderLayers where
+--     (RenderLayers q1) <> (RenderLayers q2) = RenderLayers (q1 V.++ q2)
+-- instance Monoid RenderLayers where
+--     mempty = RenderLayers V.empty
+-- instance Component RenderLayers where type Storage RenderLayers = Global RenderLayers
