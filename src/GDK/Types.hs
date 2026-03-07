@@ -14,7 +14,10 @@ module GDK.Types (Config(..)
                  , Time(..)
                  , Renderer(..)
                  , Window(..)
-                 , TargetFPS(..)) where
+                 , TargetFPS(..)
+                 , RenPoint(..)
+                 , RenRectangle(..)
+                 , RenLine(..)) where
 
 import qualified SDL
 import Apecs
@@ -55,15 +58,32 @@ data Config = Config
 --         TextureMap tm <- get global
 --         return ()
 
+data RenPoint = RenPoint
+    { pointColour :: SDL.V4 Word8
+    , pointLayer :: Int
+    } deriving (Show, Eq)
+
+data RenLine = RenLine
+    { lineStart :: SDL.V2 Float
+    , lineEnd :: SDL.V2 Float
+    , lineColour :: SDL.V4 Word8
+    , lineLayer :: Int
+    } deriving (Show, Eq)
+
+data RenRectangle = RenRectangle
+    { rectSize :: SDL.V2 Float
+    , rectColour :: SDL.V4 Word8
+    , rectLayer :: Int
+    } deriving (Show, Eq)
+
 -- | Represents an entity that can be rendered
-data Renderable = RenderableTexture RenTexture
-                | RenderableText RenText
-                | Point RenPoint
+data Renderable = Texture RenTexture
+                | Text RenText
                 | Points (V.Vector RenPoint)
-                | Line RenLine
-                | Lines (V.Vector RenLine)
-                | Rectangle RenRectangle
-                | FilledRectangle RenRectangle
+                | ConnectedLines (V.Vector RenPoint) -- ^ Draw a line between each consecutive point
+                | SeparatedLines (V.Vector RenLine)
+                | Rectangles (V.Vector RenRectangle)
+                | FilledRectangles (V.Vector RenRectangle)
                 deriving (Eq, Show)
 instance Component Renderable where type Storage Renderable = Map Renderable
 

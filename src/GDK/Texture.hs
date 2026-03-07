@@ -32,7 +32,7 @@ data Animation = Animation
 data RenTexture = RenTexture
     { textureRef :: String
     -- ^ Identifier for the texture to render
-    , layer :: Int
+    , textureLayer :: Int
     -- ^ layer for draw order
     , animationFrame :: Maybe Int
     -- ^ Frame index for animations, if applicable

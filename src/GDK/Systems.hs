@@ -114,7 +114,7 @@ stepAnimations :: forall w.
                 -> System w ()
 stepAnimations dt = cmapM $ \r -> do
     case r of
-        RenderableTexture t -> do
+        Texture t -> do
             Time t' <- get global
             TextureMap m <- get global
             let tex = textureRef t `Map.lookup` m
@@ -127,9 +127,9 @@ stepAnimations dt = cmapM $ \r -> do
                                 let frame = fromMaybe 0 (animationFrame t)
                                     newFrame = (frame + 1) `mod` frameCount a
                                 if newFrame == 0 then
-                                    return $ RenderableTexture t { textureRef = next a, animationFrame = Just 0 }
+                                    return $ Texture t { textureRef = next a, animationFrame = Just 0 }
                                 else
-                                    return $ RenderableTexture t { animationFrame = Just newFrame }
+                                    return $ Texture t { animationFrame = Just newFrame }
                             else return r
                         Nothing -> return r
         _ -> return r

@@ -15,9 +15,9 @@ instance Component FontMap where type Storage FontMap = Map FontMap
 
 data RenText = RenText
     { fontRef :: String
-    , text :: String
-    , colour :: TTF.Color
-    , layer :: Int
+    , fontText :: String
+    , fontColour :: TTF.Color
+    , fontLayer :: Int
     } deriving (Show, Eq)
 
 -- | Load a font into the 'FontMap'

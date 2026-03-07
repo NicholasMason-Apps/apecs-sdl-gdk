@@ -34,28 +34,47 @@ draw renderer fps = do
     let window = fromMaybe (error "Window not initialised") win
     size <- SDL.get $ SDL.windowSize window
     maxLayer <- cfold (\acc r -> case r of
-        RenderableTexture t -> max acc (GDK.Texture.layer t)
-        RenderableText t -> max acc (GDK.Font.layer t)) 0
+        Texture t -> max acc (textureLayer t)
+        Text t -> max acc (fontLayer t)
+        Points ps -> max acc $ V.foldl' (\acc' p -> max acc' (pointLayer p)) 0 ps
+        ConnectedLines ls -> max acc $ V.foldl' (\acc' l -> max acc' (pointLayer l)) 0 ls
+        SeparatedLines ls -> max acc $ V.foldl' (\acc' l -> max acc' (lineLayer l)) 0 ls
+        Rectangles rs -> max acc $ V.foldl' (\acc' r' -> max acc' (rectLayer r')) 0 rs
+        FilledRectangles rs -> max acc $ V.foldl' (\acc' r' -> max acc' (rectLayer r')) 0 rs) 0
     layers <- V.replicateM maxLayer (SDL.createTexture renderer SDL.RGBA8888 SDL.TextureAccessTarget size)
     TextureMap tm <- get global
     FontMap fm <- get global
     cmapM_ $ \(r, pos) -> case r of
-        RenderableTexture t -> case Map.lookup (textureRef t) tm of
+        Texture t -> case Map.lookup (textureRef t) tm of
             Just td -> do
-                let layerTex = layers V.! GDK.Texture.layer t
+                let layerTex = layers V.! textureLayer t
                 SDL.rendererRenderTarget renderer SDL.$= Just layerTex
                 drawTexture renderer td pos (animationFrame t)
             Nothing -> return () -- Texture not found, skip drawing
-        RenderableText t -> case Map.lookup (fontRef t) fm of
+        Text t -> case Map.lookup (fontRef t) fm of
             Just font -> do
-                let layerTex = layers V.! GDK.Font.layer t
+                let layerTex = layers V.! fontLayer t
                 SDL.rendererRenderTarget renderer SDL.$= Just layerTex
                 drawText renderer t font pos
             Nothing -> return () -- Font not found, skip drawing
+        Points ps -> V.mapM_ (\p -> do
+            let layerTex = layers V.! pointLayer p
+            SDL.rendererRenderTarget renderer SDL.$= Just layerTex
+            drawPoint renderer p pos) ps
+        ConnectedLines ls -> V.mapM_ (\l -> do
+            let layerTex = layers V.! lineLayer l
+            SDL.rendererRenderTarget renderer SDL.$= Just layerTex
+            drawConnectedLine renderer l pos) ls
     SDL.rendererRenderTarget renderer SDL.$= Nothing
     V.mapM_ (\t -> do
         SDL.copy renderer t Nothing Nothing
         SDL.destroyTexture t) layers
+
+
+drawPoint :: SDL.Renderer -> RenPoint -> Position -> System w ()
+drawPoint r p (Position pos) = do
+    SDL.rendererDrawColor r SDL.$= pointColour p
+    SDL.drawPoint r (SDL.P $ round <$> pos)
 
 {-|
 Draw a 'Texture' given its 'TextureData' and 'Position'
@@ -80,7 +99,7 @@ drawTexture r (TextureData t _) (Position pos) _ = do
 -- | Draw text given its 'RenText', 'Font' and 'Position'
 drawText :: SDL.Renderer -> RenText -> TTF.Font -> Position -> System w ()
 drawText r t font (Position pos) = do
-    (tex, size) <- generateSolidText r font (colour t) (text t)
+    (tex, size) <- generateSolidText r font (fontColour t) (fontText t)
     SDL.copy r tex Nothing (Just $ SDL.Rectangle (SDL.P (round <$> pos)) (fromIntegral <$> size))
     SDL.destroyTexture tex
 
