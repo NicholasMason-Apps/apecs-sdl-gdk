@@ -18,7 +18,8 @@ module GDK.Types (Config(..)
                  , RenPoint(..)
                  , RenRectangle(..)
                  , RenLine(..)
-                 , Camera(..)) where
+                 , Camera(..)
+                 , defaultConfig) where
 
 import qualified SDL
 import Apecs
@@ -40,7 +41,22 @@ data Config = Config
         windowTitle :: String, -- ^ Title of the game window
         windowDimensions :: (Int, Int), -- ^ Width and height of the game window in pixels
         backgroundColor :: SDL.V4 Word8, -- ^ Background color of the game window as an RGBA value
-        targetFPS :: TargetFPS -- ^ Desired FPS for the game loop
+        targetFPS :: TargetFPS, -- ^ Desired FPS for the game loop
+        showFPS :: Maybe String -- ^ Whether to display the current FPS on the screen, and if so, the font to use
+    }
+instance Semigroup Config where
+    _ <> c2 = c2
+instance Monoid Config where
+    mempty = defaultConfig
+instance Component Config where type Storage Config = Global Config 
+
+defaultConfig :: Config
+defaultConfig = Config
+    { windowTitle = "GDK Game"
+    , windowDimensions = (800, 600)
+    , backgroundColor = SDL.V4 0 0 0 255
+    , targetFPS = VSync
+    , showFPS = Just "Roboto-Regular" -- ^ Display FPS with Arial font
     }
 
 -- data Render r = Render r

@@ -35,12 +35,14 @@ draw :: forall w.
       , Get w IO Renderable
       , Get w IO FontMap
       , Get w IO Camera
-      , Get w IO Position)
+      , Get w IO Position
+      , Get w IO Config)
       => SDL.Renderer
       -> FPS
       -> System w ()
 draw renderer fps = do
     Window win <- get global
+    c <- get global
     let window = fromMaybe (error "Window not initialised") win
     size <- SDL.get $ SDL.windowSize window
     Camera cam <- get global
@@ -107,6 +109,15 @@ draw renderer fps = do
             when (isInView pos (w,h)) $ do
                 SDL.rendererRenderTarget renderer SDL.$= Just layerTex
                 drawFilledRect renderer r' pos
+    case showFPS c of
+        Just ref -> case Map.lookup ref fm of
+            Just font -> do
+                let layerTex = layers V.! maxLayer
+                SDL.rendererRenderTarget renderer SDL.$= Just layerTex
+                drawText renderer (RenText ref (show fps ++ " FPS") (SDL.V4 255 255 255 255) (maxLayer + 1)) font (Position $ SDL.V2 10 10)
+            Nothing -> return () -- Font not found, skip drawing FPS
+        Nothing -> return () -- Not showing FPS, skip drawing it
+        
     SDL.rendererRenderTarget renderer SDL.$= Nothing
     V.mapM_ (\t -> do
         SDL.copy renderer t Nothing Nothing

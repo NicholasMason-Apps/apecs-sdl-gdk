@@ -12,7 +12,7 @@ import Test.Hspec
 import Test.QuickCheck
 import GDK.Systems (initialise, makeWorld', stepAnimations)
 import Apecs
-import GDK.Types (Config(..), Renderable(..), Position(..), Time(..), Renderer(..), Window(..), TargetFPS(..), Camera(..))
+import GDK.Types (Config(..), Renderable(..), Position(..), Time(..), Renderer(..), Window(..), TargetFPS(..), Camera(..), defaultConfig)
 import GDK.Texture (TextureData(..), Animation(..), TextureMap(..), RenTexture(..), loadTexture)
 import qualified SDL
 import qualified Data.Text as T
@@ -23,7 +23,7 @@ import GDK.Font (FontMap(..), loadFont)
 makeWorld' []
 
 testConfig :: Config
-testConfig = Config { windowTitle = "Test Window", windowDimensions = (800, 600), backgroundColor = SDL.V4 0 0 0 255, targetFPS = Limited 60 }
+testConfig = defaultConfig { windowTitle = "Test Window" }
 
 main :: IO ()
 main = hspec $ do

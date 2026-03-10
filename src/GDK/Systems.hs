@@ -2,12 +2,12 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module GDK.Systems (initialise, run, defaultConfig, makeWorld', stepAnimations) where
+module GDK.Systems (initialise, run, makeWorld', stepAnimations) where
 
 import Apecs
 import GDK.Types
 import GDK.Texture
-import GDK.Font (FontMap(..))
+import GDK.Font (FontMap(..), loadFont)
 import qualified SDL
 import qualified SDL.Font as TTF
 import qualified SDL.Image as IMG
@@ -22,7 +22,9 @@ import System.Exit (exitSuccess)
 -- | Initialise the SDL window and renderer
 initialise :: forall w.
             (Set w IO Renderer
-            , Set w IO Window)
+            , Set w IO Window
+            , Set w IO Config
+            , Set w IO FontMap)
            => w
            -> Config -- ^ Game config
            -> IO (SDL.Window, SDL.Renderer) -- ^ Returns the created window and renderer contexts
@@ -37,6 +39,7 @@ initialise world config = do
                                            SDL.windowResizable = False }
     window <- SDL.createWindow (T.pack title) windowConfig
     runWith world (set global $ Window $ Just window)
+    runWith world (set global config)
 
     let rendererType = case targetFPS config of
             VSync -> SDL.AcceleratedVSyncRenderer
@@ -45,6 +48,7 @@ initialise world config = do
                                                SDL.rendererTargetTexture = True }
     renderer <- SDL.createRenderer window (-1) rendererConfig
     runWith world (set global $ Renderer $ Just renderer)
+    runWith world (loadFont "resources/Roboto-Regular.ttf" "Roboto-Regular" 24)
 
     return (window, renderer)
 
@@ -52,16 +56,16 @@ initialise world config = do
 run :: forall w. 
      (Has w IO Time
      , Has w IO TextureMap
-     , Get w IO Renderable)
+     , Get w IO Renderable
+     , Get w IO Config)
      => w -- ^ Initial world state
      -> SDL.Renderer -- ^ SDL renderer context
      -> SDL.Window -- ^ SDL window context
-     -> Config -- ^ Game config
      -> (Float -> System w ()) -- ^ World step function
      -> ([SDL.EventPayload] -> System w ()) -- ^ Event handler
      -> (SDL.Renderer -> FPS -> System w ()) -- ^ Draw function, receives the renderer and current FPS
      -> IO ()
-run w r window c step eventHandler draw = do
+run w r window step eventHandler draw = do
     SDL.showWindow window
     let loop prevTicks prevPerf tickAcc fpsAcc = do
             ticks <- SDL.ticks
@@ -77,13 +81,17 @@ run w r window c step eventHandler draw = do
             runSystem (do
                 stepAnimations $ fromIntegral dt / 1000
                 step $ fromIntegral dt / 1000) w
-            SDL.rendererDrawColor r SDL.$= backgroundColor c
+            runSystem (do
+                c <- get global
+                liftIO $ SDL.rendererDrawColor r SDL.$= backgroundColor c) w
             SDL.clear r
             runSystem (draw r (round avgFps)) w
             SDL.present r
-            case targetFPS c of
-                Limited fps -> SDL.delay $ floor ((1000 / fromIntegral fps) - elapsed)
-                _ -> return ()
+            runSystem (do
+                c <- get global
+                case targetFPS c of
+                    Limited fps -> SDL.delay $ floor ((1000 / fromIntegral fps) - elapsed)
+                    _ -> return ()) w
             unless quit $ loop ticks perf tickAcc' (fpsAcc + 1)
     loop 0 0 0 0
     SDL.destroyRenderer r
@@ -93,16 +101,8 @@ run w r window c step eventHandler draw = do
     SDL.quit
     exitSuccess
 
-defaultConfig :: Config
-defaultConfig = Config
-    { windowTitle = "GDK Game"
-    , windowDimensions = (800, 600)
-    , backgroundColor = SDL.V4 0 0 0 255
-    , targetFPS = VSync
-    }
-
 makeWorld' :: [Name] -> Q [Dec]
-makeWorld' cTypes = makeWorld "World" (cTypes ++ [''TextureMap, ''FontMap, ''Position, ''Time, ''Renderable, ''Renderer, ''Window, ''Camera])
+makeWorld' cTypes = makeWorld "World" (cTypes ++ [''TextureMap, ''FontMap, ''Position, ''Time, ''Renderable, ''Renderer, ''Window, ''Camera, ''Config])
 
 stepAnimations :: forall w. 
                 (Has w IO Time
