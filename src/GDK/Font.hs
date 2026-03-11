@@ -17,7 +17,6 @@ instance Monoid FontMap where
     mempty = FontMap Map.empty
 instance Component FontMap where type Storage FontMap = Global FontMap
 
--- TODO: RENAME THESE
 data RenText = RenText
     { fontRef :: String
     , displayText :: String

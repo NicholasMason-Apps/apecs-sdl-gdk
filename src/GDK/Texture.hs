@@ -46,7 +46,7 @@ instance Monoid TextureMap where
     mempty = TextureMap Map.empty
 instance Component TextureMap where type Storage TextureMap = Global TextureMap
 
--- | Loads a texture into the TextureMap with an associated identifier and optional animation data
+-- | Loads a texture into the 'TextureMap' with an associated identifier and optional animation data
 loadTexture :: forall w m. (Has w m TextureMap, MonadIO m) 
             => SDL.Renderer -- ^ SDL renderer context 
             -> FilePath

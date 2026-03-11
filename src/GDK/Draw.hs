@@ -22,6 +22,7 @@ import qualified Data.Text as T
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
 import Control.Monad (when)
+import Linear
 
 {-|
 Draw all 'Renderable' entities onto their appropriate layer.
@@ -48,9 +49,9 @@ draw renderer fps = do
     Camera cam <- get global
     let 
         isInView :: Position -> (Float,Float) -> Bool
-        isInView (Position (SDL.V2 x y)) (w,h) = let
-                (SDL.V2 vw vh) = size
-                (SDL.V2 cx cy) = cam
+        isInView (Position (V2 x y)) (w,h) = let
+                (V2 vw vh) = size
+                (V2 cx cy) = cam
                 leftInView = x <= fromIntegral cx + fromIntegral vw
                 rightInView = x + w >= fromIntegral cx
                 topInView = y <= fromIntegral cy + fromIntegral vh
@@ -99,13 +100,13 @@ draw renderer fps = do
                 drawLine renderer l pos
         Rectangle r' -> do
             let layerTex = layers V.! rectLayer r'
-                (SDL.V2 w h) = rectSize r'
+                (V2 w h) = rectSize r'
             when (isInView pos (w,h)) $ do
                 SDL.rendererRenderTarget renderer SDL.$= Just layerTex
                 drawRect renderer r' pos
         FilledRectangle r' -> do
             let layerTex = layers V.! rectLayer r'
-                (SDL.V2 w h) = rectSize r'
+                (V2 w h) = rectSize r'
             when (isInView pos (w,h)) $ do
                 SDL.rendererRenderTarget renderer SDL.$= Just layerTex
                 drawFilledRect renderer r' pos
@@ -126,7 +127,7 @@ draw renderer fps = do
 drawLine :: SDL.Renderer -> RenLine -> Position -> System w ()
 drawLine r l (Position pos) = do
     SDL.rendererDrawColor r SDL.$= lineColour l
-    SDL.drawLine r (SDL.P $ round <$> pos) (SDL.P $ round <$> SDL.V2 (lineX l) (lineY l))
+    SDL.drawLine r (SDL.P $ round <$> pos) (SDL.P $ round <$> V2 (lineX l) (lineY l))
 
 drawPoint :: SDL.Renderer -> RenPoint -> Position -> System w ()
 drawPoint r p (Position pos) = do
@@ -154,14 +155,14 @@ drawTexture r (TextureData t (Just a)) (Position pos) (Just n) = do
     let w = fromIntegral $ SDL.textureWidth info
         h = fromIntegral $ SDL.textureHeight info
         fw = w `div` fromIntegral (frameCount a)
-        srcRect = SDL.Rectangle (SDL.P (SDL.V2 (fromIntegral n * fw) 0)) (SDL.V2 fw h)
-        dstRect = SDL.Rectangle (SDL.P (round <$> pos)) (SDL.V2 fw h)
+        srcRect = SDL.Rectangle (SDL.P (V2 (fromIntegral n * fw) 0)) (V2 fw h)
+        dstRect = SDL.Rectangle (SDL.P (round <$> pos)) (V2 fw h)
     liftIO $ SDL.copy r t (Just srcRect) (Just dstRect)
 drawTexture r (TextureData t _) (Position pos) _ = do
     info <- liftIO $ SDL.queryTexture t
     let w = fromIntegral $ SDL.textureWidth info
         h = fromIntegral $ SDL.textureHeight info
-        pos' = SDL.Rectangle (SDL.P (round <$> pos)) (SDL.V2 w h)
+        pos' = SDL.Rectangle (SDL.P (round <$> pos)) (V2 w h)
     liftIO $ SDL.copy r t Nothing (Just pos')
 
 -- | Draw text given its 'RenText', 'Font' and 'Position'
@@ -181,4 +182,4 @@ generateText r font f col str = do
     tex <- liftIO $ SDL.createTextureFromSurface r surface
     SDL.freeSurface surface
     (w,h) <- liftIO $ TTF.size font t
-    return (tex, SDL.V2 w h)
+    return (tex, V2 w h)

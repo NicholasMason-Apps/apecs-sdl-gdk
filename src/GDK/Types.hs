@@ -27,7 +27,7 @@ import Data.Word (Word8)
 import GDK.Texture (RenTexture, TextureMap (..))
 import GDK.Font (RenText)
 import GHC.TypeLits (Nat)
-import qualified Data.Vector as V
+import Linear
 
 type FPS = Int
 
@@ -40,7 +40,7 @@ data Config = Config
     {
         windowTitle :: String, -- ^ Title of the game window
         windowDimensions :: (Int, Int), -- ^ Width and height of the game window in pixels
-        backgroundColor :: SDL.V4 Word8, -- ^ Background color of the game window as an RGBA value
+        backgroundColor :: V4 Word8, -- ^ Background color of the game window as an RGBA value
         targetFPS :: TargetFPS, -- ^ Desired FPS for the game loop
         showFPS :: Maybe String -- ^ Whether to display the current FPS on the screen, and if so, the font to use
     }
@@ -54,9 +54,9 @@ defaultConfig :: Config
 defaultConfig = Config
     { windowTitle = "GDK Game"
     , windowDimensions = (800, 600)
-    , backgroundColor = SDL.V4 0 0 0 255
+    , backgroundColor = V4 0 0 0 255
     , targetFPS = VSync
-    , showFPS = Just "Roboto-Regular" -- ^ Display FPS with Arial font
+    , showFPS = Just "Roboto-Regular"
     }
 
 -- data Render r = Render r
@@ -75,21 +75,24 @@ defaultConfig = Config
 --         TextureMap tm <- get global
 --         return ()
 
+-- | Represents a point to be rendered
 data RenPoint = RenPoint
-    { pointColour :: SDL.V4 Word8
+    { pointColour :: V4 Word8
     , pointLayer :: Int
     } deriving (Show, Eq)
 
+-- | Represents a line to be rendered
 data RenLine = RenLine
-    { lineColour :: SDL.V4 Word8
+    { lineColour :: V4 Word8
     , lineLayer :: Int
     , lineX :: Float -- ^ X coordinate of the line's ending point
     , lineY :: Float -- ^ Y coordinate of the line's ending point
     } deriving (Show, Eq)
 
+-- | Represents a rectangle to be rendered
 data RenRectangle = RenRectangle
-    { rectSize :: SDL.V2 Float -- ^ Width and height of the rectangle
-    , rectColour :: SDL.V4 Word8
+    { rectSize :: V2 Float -- ^ Width and height of the rectangle
+    , rectColour :: V4 Word8
     , rectLayer :: Int
     } deriving (Show, Eq)
 
@@ -103,14 +106,14 @@ data Renderable = Texture RenTexture
                 deriving (Eq, Show)
 instance Component Renderable where type Storage Renderable = Map Renderable
 
-newtype Position = Position (SDL.V2 Float) deriving (Show, Eq)
+newtype Position = Position (V2 Float) deriving (Show, Eq)
 instance Component Position where type Storage Position = Map Position
 
-newtype Camera = Camera (SDL.V2 Int)
+newtype Camera = Camera (V2 Int)
 instance Semigroup Camera where
     (Camera c1) <> (Camera c2) = Camera (c1 + c2)
 instance Monoid Camera where
-    mempty = Camera $ SDL.V2 0 0
+    mempty = Camera $ V2 0 0
 instance Component Camera where type Storage Camera = Global Camera
 
 newtype Time = Time Float deriving (Show, Eq, Num)

@@ -18,6 +18,7 @@ import qualified SDL.Raw
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
 import System.Exit (exitSuccess)
+import Linear
 
 -- | Initialise the SDL window and renderer
 initialise :: forall w.
@@ -34,7 +35,7 @@ initialise world config = do
     IMG.initialize []
     let (w,h) = windowDimensions config
         title = windowTitle config
-        windowConfig = SDL.defaultWindow { SDL.windowInitialSize = SDL.V2 (fromIntegral w) (fromIntegral h),
+        windowConfig = SDL.defaultWindow { SDL.windowInitialSize = V2 (fromIntegral w) (fromIntegral h),
                                            SDL.windowMode = SDL.Windowed,
                                            SDL.windowResizable = False }
     window <- SDL.createWindow (T.pack title) windowConfig

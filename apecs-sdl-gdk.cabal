@@ -46,6 +46,7 @@ library
     , exceptions
     , hspec
     , hspec-contrib
+    , linear
     , sdl2
     , sdl2-image
     , sdl2-ttf
@@ -73,6 +74,7 @@ executable apecs-sdl-gdk-exe
     , exceptions
     , hspec
     , hspec-contrib
+    , linear
     , sdl2
     , sdl2-image
     , sdl2-ttf
@@ -101,6 +103,7 @@ test-suite apecs-sdl-gdk-test
     , exceptions
     , hspec
     , hspec-contrib
+    , linear
     , sdl2
     , sdl2-image
     , sdl2-ttf
