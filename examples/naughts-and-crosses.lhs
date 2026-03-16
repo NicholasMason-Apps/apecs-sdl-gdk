@@ -28,7 +28,7 @@ Next we want to import `linear` for working with multi-dimensional vectors.
 
 > import Linear
 
-Finally, we will import TODO:
+Finally, we will import some other utilities to help us later:
 
 > import qualified Data.Set as Set
 > import qualified SDL
@@ -37,11 +37,11 @@ Finally, we will import TODO:
 > import Data.Maybe (isJust)
 > import Data.Foldable (foldl')
 
-Now with the imports complete, we can define some Components needed for our game logic! If you are not familiar with the notion of an ECS, I would recommend reading the [Apecs paper](https://github.com/jonascarpay/apecs/blob/master/apecs/prepub.pdf) (as well as the other resources linked in the `README.md`) to get an understanding of how it works. In short, an ECS works by having you create Entities which inhabit the game world, and have tied to them a composition of Components which are used to represent properties of that entity. You then write Systems to manipulate all entities with a specific subset of components to write game logic.
+Now with the imports complete, we can define some Components needed for our game logic! If you are not familiar with the notion of an ECS, I would recommend reading the [Apecs paper](https://github.com/jonascarpay/apecs/blob/master/apecs/prepub.pdf) (as well as the other resources linked in the `README.md`) to get an understanding of how it works. In short, an ECS works by having you create Entities which inhabit the game world, and have tied to them a composition of Components which are used to represent properties of that entity. You then write Systems to manipulate all entities with a specific subset of components to write game logic. For example, suppose we have three entities. One entity holds `Player` and `Position` components, and the other two hold `Enemy` and `Position` components. This means in our world we have three entities and three types of components. Then, when writing systems, we could update **all** Entities which have a `Position` component to move them, and then later on update only the Entity with the `Player` component to decrement some internal health.
 
-In Apecs, Components come in the form of Haskell types being instances of the Component class, and each have their own store specified. A store is simply the data structure used for it. The most common one you will use is `Map`, as it allows for each entity to potentially have an instance of this component. There are others, however, such as: `Global`, which allows data to be stored irrespective to any entity; `Unique`, which allows at most one entity to hold the component; and `Cache`, which wraps around another store to allow for O(1) reads and writes on it.
+In Apecs, Components come in the form of Haskell types being instances of the Component class, and each have their own store specified. A store is simply the data structure used for that component. The most common one you will use is `Map`, as it allows for each entity to potentially have an instance of this component. There are others, however, such as: `Global`, which allows data to be stored irrespective to any entity (more on that later); `Unique`, which allows at most one entity to hold the component; and `Cache`, which wraps around another store to allow for O(1) reads and writes on it.
 
-For the purpose of naughts-and-crosses, we will need to store: the current board state, the state of the game, the naughts or crosses to draw on the screen, and for some visuals which will be explained later, a countdown timer.
+For the purpose of naughts-and-crosses, we will need to store: the current board state, the state of the game, the naughts or crosses to draw on the screen, player inputs, and for some visuals which will be explained later, a countdown timer.
 
 For the first two, we will make use of the `Global` store. When defining a Component that uses `Global`, we need to also make it an instance of `Monoid`, which by extension depending on your GHC version also requires making it an instance of `Semigroup`. The reason for requiring a `Monoid` instance is to gain access to `mempty`, as `mempty` is used to derive the starting state of the `Global` store.
 
@@ -101,6 +101,7 @@ With those Global Components out of the way, we can focus on storing the actual 
 <     -- ^ layer for draw order
 <     , animationFrame :: Maybe Int
 <     -- ^ Frame index for animations, if applicable
+<     , textureVisible :: Bool
 <     } deriving (Eq, Show)
 < 
 < data RenText = RenText
@@ -108,11 +109,13 @@ With those Global Components out of the way, we can focus on storing the actual 
 <     , displayText :: String
 <     , textColour :: TTF.Color
 <     , textLayer :: Int
+<     , textVisible :: Bool
 <     } deriving (Show, Eq)
 < 
 < data RenPoint = RenPoint
 <     { pointColour :: V4 Word8
 <     , pointLayer :: Int
+<     , pointVisible :: Bool
 <     } deriving (Show, Eq)
 < 
 < data RenLine = RenLine
@@ -120,12 +123,14 @@ With those Global Components out of the way, we can focus on storing the actual 
 <     , lineLayer :: Int
 <     , lineX :: Float -- ^ X coordinate of the line's ending point
 <     , lineY :: Float -- ^ Y coordinate of the line's ending point
+<     , lineVisible :: Bool
 <     } deriving (Show, Eq)
 < 
 < data RenRectangle = RenRectangle
 <     { rectSize :: V2 Float -- ^ Width and height of the rectangle
 <     , rectColour :: V4 Word8
 <     , rectLayer :: Int
+<     , rectVisible :: Bool
 <     } deriving (Show, Eq)
 < 
 < -- | Represents an entity that can be rendered
@@ -187,11 +192,11 @@ Alongside the two most important Components, `Renderable` and `Position`, `apecs
 
 Following `Config`, we also have these other `Global` Components
 
-< newtype Camera = Camera (V2 Int)
+< newtype Camera = Camera { camFunc :: V2 Float -> V2 Float }
 < instance Semigroup Camera where
-<     (Camera c1) <> (Camera c2) = Camera (c1 + c2)
+<     (Camera f1) <> (Camera f2) = Camera $ \pos -> f1 (f2 pos)
 < instance Monoid Camera where
-<     mempty = Camera $ V2 0 0
+<     mempty = Camera id
 < instance Component Camera where type Storage Camera = Global Camera
 < 
 < newtype Time = Time Float deriving (Show, Eq, Num)
@@ -215,7 +220,7 @@ Following `Config`, we also have these other `Global` Components
 <     mempty = Window Nothing
 < instance Component Window where type Storage Window = Global Window
 
-`Camera` is used to store the x and y offset to apply to the renderer when drawing. An example of when you may want to use this is to lock the game window to always be centre on your player. `Time` is used to store the total accumulated time of the game. `Renderer` is used to store the SDL rendering context, and similarly `Window` is used to store the SDL window context.
+`Camera` is used to store a function to apply at rendering time to offset all `Renderable` Entities. An example of when you may want to use this is to lock the game window to always be centre on your player. `Time` is used to store the total accumulated time of the game. `Renderer` is used to store the SDL rendering context, and similarly `Window` is used to store the SDL window context.
 
 With all of our Components being defined, we need to create our Game World type. In Apecs, this works by doing `makeWorld "world" [..]`, however `apecs-sdl-gdk` exposes `makeWorld'`, which alongside your own Components, also initialises the game world to include the `apecs-sdl-gdk` specific components. Thus, we need to write the following:
 
@@ -393,7 +398,7 @@ The new thing here is `modify`. `modify` is a function used to update a single C
 >             else
 >                 modify global $ \(_ :: Turn) -> t
 
-`stepCheckWin` checks all possible locations for a complete line, and if so then creates a new line Entity for it along starting a timer of 3 seconds. For those that are straight lines, we offset them to be in the centre of the square. It is important to note that the axes for SDL, and by extension `apecs-sdl-gdk` increase to the right and incread downward for the x and y axes respectively.
+`stepCheckWin` checks all possible locations for a complete line, and if so then creates a new line Entity for it along starting a timer of 3 seconds. For those that are straight lines, we offset them to be in the centre of the square. It is important to note that the axes for SDL, and by extension `apecs-sdl-gdk` increase to the right and increase downward for the x and y axes respectively.
 
 > stepWin :: Float -> System' ()
 > stepWin dt = cmapM $ \(Countdown t) -> if t < 0
@@ -418,13 +423,13 @@ Since Apecs would be checking all Entities with a Position if they were a player
 
 For the case of `stepWin`, we actually use `cmapM`. Like with `map` and its monadic variant `mapM`, `cmapM` is Apecs' monadic variant of `cmap`, allowing for a monadic function to be passed. It is important to note that, when using a monadic function, you are working within a Monad. Therefore, you have the ability to introduce side effects. Whilst this can be helpful, such as in our case of progressing the game state, it is important to always be mindful of what you are doing within your code. Introducing side effects where they should not be is bad practice, and by doing so you will not only make your life harder when debugging, but also remove much of the benefit Haskell provides by being a pure functional language!
 
-With all that out of the way, let's actually focus on the type of `stepWin`'s `cmapM`, since it also is something of interest. The type of our function is `Countdown -> System' (Either Countdown (Not Countdown))`. If we remove the `System'` Monad from the type, like how it would be for `cmap`, we wouldget the following `Countdown -> Either Countdown (Not Countdown)`. As mentioned before, from our type we are getting an Entity which has a `Countdown` component, and then returning `Either Countdown (Not Countdown)`, but what does `Either Countdown (Not Countdown)` actually mean for Apecs?
+With all that out of the way, let's actually focus on the type of `stepWin`'s `cmapM`, since it also is something of interest. The type of our function is `Countdown -> System' (Either Countdown (Not Countdown))`. If we remove the `System'` Monad from the type, like how it would be for `cmap`, we would get the following `Countdown -> Either Countdown (Not Countdown)`. As mentioned before, from our type we are getting an Entity which has a `Countdown` component, and then returning `Either Countdown (Not Countdown)`, but what does `Either Countdown (Not Countdown)` actually mean for Apecs?
 
-Let's start with `Either`. In Apecs, `Either a b` is used to represent two possible outcomes, captured by our `Left a` and `Right b` respectively. In the case of our function, we capture two possible outcomes: we either write to `Countdown` in the case of our `Left`, or we delete `Countdown` in the case of our `Right`.
+Let's start with `Either`. In Apecs, `Either a b` is used to represent two possible outcomes, captured by our `Left a` and `Right b` respectively. In the case of our function, we capture two possible outcomes: we either write to `Countdown` in the case of our `Left`, or we delete `Countdown` in the case of our `Right` thanks to `Not`.
 
 `Not :: Not c` is used to delete something, and there are other ways, such as with `Maybe`, or by using `destroy`. We will showcase `Maybe` later.
 
-It is important to note that, when destroying an Entity, make sure to specify **all** the Entity's components. Failing to do so won't break your logic, but will mean you have components floating around in memory doing nothing as they are not attached to any entity.
+It is important to note that, when destroying an Entity, make sure to specify **all** the Entity's components. Failing to do so will mean you have components floating around in memory, which not only causes a memory leak but may affect logic!
 
 > stepReset :: Float -> System' ()
 > stepReset dt = do
