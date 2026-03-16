@@ -120,13 +120,6 @@ instance Monoid Camera where
     mempty = Camera id
 instance Component Camera where type Storage Camera = Global Camera
 
--- newtype Camera = Camera (V2 Int)
--- instance Semigroup Camera where
---     (Camera c1) <> (Camera c2) = Camera (c1 + c2)
--- instance Monoid Camera where
---     mempty = Camera $ V2 0 0
--- instance Component Camera where type Storage Camera = Global Camera
-
 newtype Time = Time Float deriving (Show, Eq, Num)
 instance Semigroup Time where
     (Time t1) <> (Time t2) = Time (t1 + t2)

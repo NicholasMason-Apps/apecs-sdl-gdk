@@ -25,7 +25,7 @@ data Animation = Animation
     , frameSpeed :: Float
     -- ^ Duration of each frame in seconds
     , next :: String
-    -- ^ Identifier of the next texture to transition to after this one finishes
+    -- ^ Identifier of the next texture to transition to after this one finishes. If this is the empty string, the final frame will be held instead of looping or transitioning
     } deriving (Show, Eq)
 
 -- | Represents a Texture for rendering

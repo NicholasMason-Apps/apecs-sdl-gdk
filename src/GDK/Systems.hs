@@ -132,8 +132,10 @@ stepAnimations dt = cmapM $ \r -> do
                             if trigger then do
                                 let frame = fromMaybe 0 (animationFrame t)
                                     newFrame = (frame + 1) `mod` frameCount a
-                                if newFrame == 0 then
+                                if newFrame == 0 && next a /= "" then
                                     return $ Texture t { textureRef = next a, animationFrame = Just 0 }
+                                else if newFrame == 0 then
+                                    return $ Texture t { animationFrame = Just frame }
                                 else
                                     return $ Texture t { animationFrame = Just newFrame }
                             else return r
