@@ -1,4 +1,10 @@
-This document breaks down a very small game written using `apecs-sdl-gdk`. We will be making noughts-and-crosses (or tic-tac-toe depending on where you are from). The main focus of this document will be to highlight how to use `apecs-sdl-gdk`, a (brief) introduction into how to use Apecs, and explain what some of the `apecs-sdl-gdk` functions do under-the-hood. Additionally, I will also highlight some tips for game development using Apecs from my experience! I **strongly** recommend you write code yourself as you follow along, as it will help a lot to solidfy the basic concepts. Additionally, Apecs itself has a [tutorial](https://github.com/jonascarpay/apecs/blob/master/examples/Shmup.md), which whilst it does not use `apecs-sdl-gdk`, I would also highly recommend walking through it as well for a more comprohensive overview of how to use Apecs specifically. 
+# Noughts & Crosses Tutorial
+
+This document breaks down a very small game written using `apecs-sdl-gdk`. We will be making noughts-and-crosses (or tic-tac-toe depending on where you are from). The main focus of this document will be to highlight how to use `apecs-sdl-gdk`, a (brief) introduction into how to use Apecs, and explain what some of the `apecs-sdl-gdk` functions do under-the-hood. Additionally, I will also highlight some tips for game development using Apecs from my experience! 
+
+I **strongly** recommend you write code yourself as you follow along, as it will help a lot to solidfy the basic concepts. Additionally, Apecs itself has a [tutorial](https://github.com/jonascarpay/apecs/blob/master/examples/Shmup.md), which whilst it does not use `apecs-sdl-gdk`, I would also highly recommend walking through it as well for a more comprohensive overview of how to use Apecs specifically. 
+
+## Preliminary Setup
 
 With all that said, let's start writing some code! To start with, we will need some language extensions since Apecs makes use of a lot of extensions for its inner workings.
 
@@ -14,7 +20,7 @@ With all that said, let's start writing some code! To start with, we will need s
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 ```
 
-Next, we need some imports. To work with Apecs and create some game logic, we simply import Apecs directly
+Next, we need some imports. To work with Apecs and create some game logic, we simply import Apecs directly:
 
 ```haskell
 import Apecs
@@ -45,6 +51,8 @@ import System.Random
 import Data.Maybe (isJust)
 import Data.Foldable (foldl')
 ```
+
+## Game Components
 
 Now with the imports complete, we can define some Components needed for our game logic! If you are not familiar with the notion of an ECS, I would recommend reading the [Apecs paper](https://github.com/jonascarpay/apecs/blob/master/apecs/prepub.pdf) (as well as the other resources linked in the `README.md`) to get an understanding of how it works. In short, an ECS works by having you create Entities which inhabit the game world, and have tied to them a composition of Components which are used to represent properties of that entity. You then write Systems to manipulate all entities with a specific subset of components to write game logic. For example, suppose we have three entities. One entity holds `Player` and `Position` components, and the other two hold `Enemy` and `Position` components. This means in our world we have three entities and three types of components. Then, when writing systems, we could update **all** Entities which have a `Position` component to move them, and then later on update only the Entity with the `Player` component to decrement some internal health.
 
@@ -103,7 +111,9 @@ newtype Countdown = Countdown Float deriving (Show, Eq, Num)
 instance Component Countdown where type Storage Countdown = Unique Countdown 
 ```
 
-With those Global Components out of the way, we can focus on storing the actual naughts and crosses to draw on the screen. Normally, this would require us to create new Components to store their positions, drawing data, etc., however `apecs-sdl-gdk` exposes a nice way to capture this for minimal effort. `apecs-sdl-gdk` exposes a `Renderable` sum type and a `Position` component, which are both stored in a Map. The actual definitions of both are shown below, and I will go into more detail about what they do alongside those definitions.
+## Displaying Noughts & Crosses
+
+With those Global Components out of the way, we can focus on storing the actual noughts and crosses to draw on the screen. Normally, this would require us to create new Components to store their positions, drawing data, etc., however `apecs-sdl-gdk` exposes a nice way to capture this for minimal effort. `apecs-sdl-gdk` exposes a `Renderable` sum type and a `Position` component, which are both stored in a Map. The actual definitions of both are shown below, and I will go into more detail about what they do alongside those definitions.
 
 ```sourceCode haskell
 data RenTexture = RenTexture
@@ -258,6 +268,8 @@ Finally, I like to define a type synonym around our World to make our lives ever
 ```haskell
 type System' a = System World a
 ```
+
+## Game Logic
 
 Now with our World created, we can now start implementing our naughts-and-crosses game logic. We will first start by defining our Game's configuration.
 
@@ -491,6 +503,8 @@ stepReset dt = do
 
 As you have probably noticed, all our step functions take in a `Float` named `dt`, but never actually use it. Whilst in practice you would simply adjust their type to never take it as an input (which is the right thing to do!), I wanted to reinforce the idea of passing around `dt`. When running a game with `apecs-sdl-gdk`, `dt` is given to your top-level step function, and represents the amount of time elapsed between the previous frame and the current frame in milliseconds. Therefore, in any case where you need to have frame specific timings, you will need to make use of the input `dt`.
 
+## Final Touches
+
 Now that we have written all of the systems needed for our game logic, we have two things left to do. The first is writing an event handler. In `apecs-sdl-gdk`, events are polled for you, and then passed onto your event handler as `[SDL.EventPayload]`. Therefore, if you want to see all the possible events that are polled and sent for handling, please refer to the [SDL Documentation](https://hackage.haskell.org/package/sdl2-2.5.5.0/docs/SDL-Event.html#t:EventPayload). Since SDL's `EventPayload` makes use of Sum types and records for capturing all possible event payload, we will make use of top-level pattern matching for our event handler functions
 
 ```haskell
@@ -530,6 +544,8 @@ main = do
 ```
 
 And just like that, our game is complete!
+
+## Tips & Tricks for Haskell Game Development
 
 With our naughts-and-crosses game complete, I now want to just highlight and collate together some tips for developing games, especially with Apecs, SDL, and `apecs-sdl-gdk`
 
