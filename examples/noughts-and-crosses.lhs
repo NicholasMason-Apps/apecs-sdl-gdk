@@ -409,10 +409,10 @@ Now let's implement our turn-specific step functions. We will go top-down in our
 >                 r1' = fromIntegral r1
 >                 r3' = fromIntegral r3
 >                 rl = RenLine { lineColour = V4 255 0 0 255
->                                  , lineLayer = 1
->                                  , lineX = 0
->                                  , lineY = 0
->                                  , lineVisible = True}
+>                              , lineLayer = 1
+>                              , lineX = 0
+>                              , lineY = 0
+>                              , lineVisible = True}
 >             if c1' == c3' then
 >                 void $ newEntity (Line rl { lineX = 600
 >                                           , lineY = 0 }, Position (V2 0 (200 * c1' + 100)))
