@@ -5,7 +5,7 @@
 ## High-Level Overview
 
 Below is a high-level overview of what `apecs-sdl-gdk` currently provides:
-- Built-in rendering - through using a Type system and `apecs` Component system, users are able to avoid manually doing rendering calls in SDL by calling a single function to do it for them, allowing for layered rendering, camera manipulation, and more. This rendering is also optimised, such as employing frustrum culling.
+- Built-in rendering - through using a Type system and `apecs` Component system, users are able to avoid manually doing rendering calls in SDL by calling a single function to do it for them, allowing for layered rendering, camera manipulation, and more. This rendering is also optimised, such as employing frustum culling.
 - Automated frame handling and running of game loop - `apecs-sdl-gdk` exposes a `run` function which handles frame deltas, exact time deltas, and more to accurately run your game loop to the desired frame rate, with frame-independent time deltas.
 - Automated animation handling - textures simply need to be specified as an Animation, and `apecs-sdl-gdk` will handle the progressing of animations through sprite sheets for you, as well as the displaying of them during the rendering pipeline.
 - Streamlined asset loading - textures and fonts can be loaded easily into corresponding maps, making use of the flyweight pattern for optimised memory usage, and reducing errors on your end.
