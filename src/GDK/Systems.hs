@@ -129,13 +129,16 @@ stepAnimations dt = cmapM $ \r -> do
                     Just tex' -> case animation tex' of
                             Just a -> do
                                 let trigger = floor (t' / frameSpeed a) /= floor ((t' + dt) / frameSpeed a)
+                                    nextTex = next a `Map.lookup` m
                                 if trigger then do
                                     let frame = fromMaybe 0 (animationFrame t)
                                         newFrame = (frame + 1) `mod` frameCount a
-                                    if newFrame == 0 && next a /= "" then
-                                        return $ Texture t { textureRef = next a, animationFrame = Just 0 }
-                                    else if newFrame == 0 then
-                                        return $ Texture t { animationFrame = Just frame }
+                                    if newFrame == 0 then
+                                        case nextTex of
+                                            Just nextTex' -> case animation nextTex' of
+                                                Just _ -> return $ Texture t { textureRef = next a, animationFrame = Just 0 }
+                                                Nothing -> return $ Texture t { textureRef = next a, animationFrame = Nothing }
+                                            Nothing -> return $ Texture t { animationFrame = Just frame }
                                     else
                                         return $ Texture t { animationFrame = Just newFrame }
                                 else return r
