@@ -46,7 +46,6 @@ draw renderer fps = do
     (Camera cam) <- get global
     let (ww,wh) = windowDimensions c
         size = V2 (fromIntegral ww) (fromIntegral wh)
-    let
         isInView :: V2 Float -> (Float,Float) -> Bool
         isInView (V2 x y) (w,h) =
             let
