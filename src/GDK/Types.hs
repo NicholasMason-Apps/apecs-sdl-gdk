@@ -20,6 +20,9 @@ module GDK.Types (Config(..)
                  , RenRectangle(..)
                  , RenLine(..)
                  , Camera(..)
+                 , Colour(..)
+                 , Layer(..)
+                 , IsVisible(..)
                  , defaultConfig) where
 
 import qualified SDL
@@ -29,6 +32,7 @@ import GDK.Texture (RenTexture)
 import GDK.Font (RenText)
 import GHC.TypeLits (Nat)
 import Linear
+import qualified Data.Vector.Mutable as MV
 
 type FPS = Int
 
@@ -77,27 +81,17 @@ defaultConfig = Config
 --         return ()
 
 -- | Represents a point to be rendered
-data RenPoint = RenPoint
-    { pointColour :: V4 Word8
-    , pointLayer :: Int
-    , pointVisible :: Bool
-    } deriving (Show, Eq)
+data RenPoint = RenPoint deriving (Show, Eq)
 
 -- | Represents a line to be rendered
 data RenLine = RenLine
-    { lineColour :: V4 Word8
-    , lineLayer :: Int
-    , lineX :: Float -- ^ X coordinate of the line's ending point
+    { lineX :: Float -- ^ X coordinate of the line's ending point
     , lineY :: Float -- ^ Y coordinate of the line's ending point
-    , lineVisible :: Bool
     } deriving (Show, Eq)
 
 -- | Represents a rectangle to be rendered
-data RenRectangle = RenRectangle
+newtype RenRectangle = RenRectangle
     { rectSize :: V2 Float -- ^ Width and height of the rectangle
-    , rectColour :: V4 Word8
-    , rectLayer :: Int
-    , rectVisible :: Bool
     } deriving (Show, Eq)
 
 -- | Component used to tag a single Entity with data for it to be rendered
@@ -109,6 +103,18 @@ data Renderable = Texture RenTexture
                 | FilledRectangle RenRectangle
                 deriving (Eq, Show)
 instance Component Renderable where type Storage Renderable = Map Renderable
+
+-- | Associate a colour with an entity for rendering. If no colour is supplied, it will default to black
+newtype Colour = Colour (V4 Word8) deriving (Show, Eq)
+instance Component Colour where type Storage Colour = Map Colour
+
+-- | Layer Component for draw ordering, higher layers are drawn on top of lower layers. Indexing starts at 0
+newtype Layer = Layer Int deriving (Show, Eq, Ord)
+instance Component Layer where type Storage Layer = Map Layer
+
+-- | Component to track whether an entity should be rendered or not, used for culling and animation stepping. If an entity is not supplied this, it will default to True (visible)
+newtype IsVisible = IsVisible Bool deriving (Show, Eq)
+instance Component IsVisible where type Storage IsVisible = Map IsVisible
 
 newtype Position = Position (V2 Float) deriving (Show, Eq)
 instance Component Position where type Storage Position = Map Position

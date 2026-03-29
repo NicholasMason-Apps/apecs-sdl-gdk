@@ -134,8 +134,10 @@ startTransition :: Float -> Float -> TransitionEvent -> System' ()
 startTransition angle speed event = do
     cmapM_ $ \(Transition {}, e) -> destroy e (Proxy @(Transition, Position, Renderable))
     void $ newEntity (Transition { trProgress = 0, trAngle = angle, trSpeed = speed, trCoverEventFired = False, trEvent = event }
-                    , Texture RenTexture { textureRef = "transition", textureLayer = 4, animationFrame = Nothing, textureVisible = True }
-                    , Position (V2 1000000 1000000))
+                    , Texture RenTexture { textureRef = "transition", animationFrame = Nothing }
+                    , Position (V2 1000000 1000000)
+                    , Layer 4
+                    , IsVisible True)
 
 -- Update positions based on velocity and delta time
 stepPosition :: Float -> System' ()
@@ -150,4 +152,4 @@ spawnParticle startPos endPos sref frameOffset = do
         (Position start) = startPos
         (Position end) = endPos
         vel = (end - start) ^/ ((fromIntegral frameCount' - fromIntegral frameOffset) * frameSpeed')
-    newEntity (Particle endPos, startPos, Velocity vel, Texture RenTexture { textureRef = sref, textureLayer = 3, animationFrame = Just frameOffset, textureVisible = True })
+    newEntity (Particle endPos, startPos, Velocity vel, Texture RenTexture { textureRef = sref, animationFrame = Just frameOffset }, Layer 3, IsVisible True)

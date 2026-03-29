@@ -133,30 +133,14 @@ initialize r = do
     forM_ settings (set global)
     createMenuButtons
     createSettingsButtons
-    void $ newEntity (TitleScreen, Texture RenTexture { textureRef = "title-screen", textureLayer = 0, animationFrame = Nothing, textureVisible = True }, Position (V2 0 0))
-
-makeVisibile :: Renderable -> Renderable
-makeVisibile (Texture t) = Texture t { textureVisible = True }
-makeVisibile (Text t) = Text t { textVisible = True }
-makeVisibile (Point p) = Point p { pointVisible = True }
-makeVisibile (Line l) = Line l { lineVisible = True }
-makeVisibile (Rectangle r) = Rectangle r { rectVisible = True }
-makeVisibile (FilledRectangle r) = FilledRectangle r { rectVisible = True }
-
-makeInvisible :: Renderable -> Renderable
-makeInvisible (Texture t) = Texture t { textureVisible = False }
-makeInvisible (Text t) = Text t { textVisible = False }
-makeInvisible (Point p) = Point p { pointVisible = False }
-makeInvisible (Line l) = Line l { lineVisible = False }
-makeInvisible (Rectangle r) = Rectangle r { rectVisible = False }
-makeInvisible (FilledRectangle r) = FilledRectangle r { rectVisible = False }
+    void $ newEntity (TitleScreen, Texture RenTexture { textureRef = "title-screen", animationFrame = Nothing }, Position (V2 0 0), Layer 0, IsVisible True)
 
 createSettingsButtons :: System' ()
 createSettingsButtons = do
     settings <- get global
-    windowedButton <- newEntity (SettingsUIElement, Button WindowedButton, Position (V2 (-132) 124), Texture RenTexture { textureRef="windowed-button", textureLayer = 1, animationFrame = Nothing, textureVisible = False })
-    fullscreenButton <- newEntity (SettingsUIElement, Button FullscreenButton, Position (V2 135 124), Texture RenTexture { textureRef="fullscreen-button", textureLayer = 1, animationFrame = Nothing, textureVisible = False })
-    _ <- newEntity (SettingsUIElement, Button BackToTitleButton, Position (V2 (-450) 300), Texture RenTexture { textureRef="back-button", textureLayer = 1, animationFrame = Nothing, textureVisible = False })
+    windowedButton <- newEntity (SettingsUIElement, Button WindowedButton, Position (V2 (-132) 124), Texture RenTexture { textureRef="windowed-button", animationFrame = Nothing }, Layer 1, IsVisible False)
+    fullscreenButton <- newEntity (SettingsUIElement, Button FullscreenButton, Position (V2 135 124), Texture RenTexture { textureRef="fullscreen-button", animationFrame = Nothing }, Layer 1, IsVisible False)
+    _ <- newEntity (SettingsUIElement, Button BackToTitleButton, Position (V2 (-450) 300), Texture RenTexture { textureRef="back-button", animationFrame = Nothing }, Layer 1, IsVisible False)
     let startActiveButton = case settings of
             Just (Settings { fullscreen = True }) -> fullscreenButton
             _ -> windowedButton
@@ -164,8 +148,8 @@ createSettingsButtons = do
 
 createMenuButtons :: System' ()
 createMenuButtons = do
-    _ <- newEntity (MainMenuUIElement, Button StartGameButton, Position (V2 (1280/2 - 50 - 100) (-400)), Texture RenTexture { textureRef="start-game-button", textureLayer = 1, animationFrame = Nothing, textureVisible = True })
-    void $ newEntity (MainMenuUIElement, Button SettingsButton, Position (V2 (1280/2 - 100) (-500)), Texture RenTexture { textureRef="settings-button", textureLayer = 1, animationFrame = Nothing, textureVisible = True })
+    _ <- newEntity (MainMenuUIElement, Button StartGameButton, Position (V2 (1280/2 - 50 - 100) (-400)), Texture RenTexture { textureRef="start-game-button", animationFrame = Nothing }, Layer 1, IsVisible True)
+    void $ newEntity (MainMenuUIElement, Button SettingsButton, Position (V2 (1280/2 - 100) (-500)), Texture RenTexture { textureRef="settings-button", animationFrame = Nothing }, Layer 1, IsVisible True)
 
 incrementTime :: Float -> System' ()
 incrementTime dT = do
@@ -182,7 +166,7 @@ stepParticles dT = cmapM_ $ \(Particle (Position destP), Position currP, r, e) -
         let TextureData _ rs = tmap Map.! textureRef rt
         case rs of
             Just a -> when (fromMaybe 0 (animationFrame rt) + 1 >= frameCount a) $ do
-                destroy e (Proxy @(Particle, Renderable, Position))
+                destroy e (Proxy @(Particle, Renderable, Position, IsVisible, Layer))
                 cmapM_ $ \(CombatAttackParticle _, e') -> destroy e' (Proxy @CombatAttackParticle)
             Nothing -> return ()
     _ -> return ()
@@ -201,49 +185,49 @@ toDungeonAction = do
     case ce of
         Nothing -> return ()
         Just e -> do
-            destroy e (Proxy @(Enemy, Renderable, Position, Velocity, Health))
-            cmapM_ $ \(CombatEnemy _, e') -> destroy e' (Proxy @(CombatEnemy, Renderable, Position))
+            destroy e (Proxy @(Enemy, Renderable, Position, Velocity, Health, Layer, IsVisible))
+            cmapM_ $ \(CombatEnemy _, e') -> destroy e' (Proxy @(CombatEnemy, Renderable, Position, Layer, IsVisible))
             set global DungeonState
-    cmap $ \(Player, r) -> makeVisibile r
-    cmap $ \(Enemy _, r) -> makeVisibile r
-    cmap $ \(Tile, r) -> makeVisibile r
-    cmap $ \(Wall, r) -> makeVisibile r
-    cmap $ \(Ladder, r) -> makeVisibile r
-    cmap $ \(Heart, r) -> makeVisibile r
-    cmap $ \(CombatPlayer, r) -> makeInvisible r
-    cmap $ \(CombatWall, r) -> makeInvisible r
-    cmap $ \(CombatTile, r) -> makeInvisible r
-    cmapM_ $ \(CombatUI, e) -> destroy e (Proxy @(CombatUI, Position, Renderable))
+    cmap $ \(Player, IsVisible _) -> IsVisible True
+    cmap $ \(Enemy _, IsVisible _) -> IsVisible True
+    cmap $ \(Tile, IsVisible _) -> IsVisible True
+    cmap $ \(Wall, IsVisible _) -> IsVisible True
+    cmap $ \(Ladder, IsVisible _) -> IsVisible True
+    cmap $ \(Heart, IsVisible _) -> IsVisible True
+    cmap $ \(CombatPlayer, IsVisible _) -> IsVisible False
+    cmap $ \(CombatWall, IsVisible _) -> IsVisible False
+    cmap $ \(CombatTile, IsVisible _) -> IsVisible False
+    cmapM_ $ \(CombatUI, e) -> destroy e (Proxy @(CombatUI, Position, Renderable, Layer, IsVisible))
 
 toCombatAction :: System' ()
 toCombatAction = do
-    cmap $ \(Player, r) -> makeInvisible r
-    cmap $ \(Enemy _, r) -> makeInvisible r
-    cmap $ \(Tile, r) -> makeInvisible r
-    cmap $ \(Wall, r) -> makeInvisible r
-    cmap $ \(Ladder, r) -> makeInvisible r
-    cmap $ \(Heart, r) -> makeInvisible r
-    cmap $ \(CombatPlayer, r) -> makeVisibile r
-    cmap $ \(CombatWall, r) -> makeVisibile r
-    cmap $ \(CombatTile, r) -> makeVisibile r
-    _ <- newEntity (CombatUI, Position (V2 0 0), Texture RenTexture { textureRef = "combat-attack-select-ui", textureLayer = 3, animationFrame = Nothing, textureVisible = True })
+    cmap $ \(Player, IsVisible _) -> IsVisible False
+    cmap $ \(Enemy _, IsVisible _) -> IsVisible False
+    cmap $ \(Tile, IsVisible _) -> IsVisible False
+    cmap $ \(Wall, IsVisible _) -> IsVisible False
+    cmap $ \(Ladder, IsVisible _) -> IsVisible False
+    cmap $ \(Heart, IsVisible _) -> IsVisible False
+    cmap $ \(CombatPlayer, IsVisible _) -> IsVisible True
+    cmap $ \(CombatWall, IsVisible _) -> IsVisible True
+    cmap $ \(CombatTile, IsVisible _) -> IsVisible True
+    _ <- newEntity (CombatUI, Position (V2 0 0), Texture RenTexture { textureRef = "combat-attack-select-ui", animationFrame = Nothing }, Layer 3, IsVisible True)
     set global CombatState
 
 toNextLevelAction :: System' ()
 toNextLevelAction = do
     -- Destroy all Walls, Floors, etc.
-    cmapM_ $ \(Wall, e) -> destroy e (Proxy @(Wall, Tile, Position, Renderable, BoundaryBox))
-    cmapM_ $ \(Ladder, e) -> destroy e (Proxy @(Ladder, Tile, Position, Renderable, BoundaryBox))
-    cmapM_ $ \(Tile, e) -> destroy e (Proxy @(Tile, Position, Renderable))
-    cmapM_ $ \(Enemy _, e) -> destroy e (Proxy @(Enemy, Position, Velocity, Health, Renderable, BoundaryBox))
-    cmapM_ $ \(Heart, Item, e) -> destroy e (Proxy @(Heart, Item, Position, Renderable, BoundaryBox))
+    cmapM_ $ \(Wall, e) -> destroy e (Proxy @(Wall, Tile, Position, Renderable, BoundaryBox, Layer, IsVisible))
+    cmapM_ $ \(Ladder, e) -> destroy e (Proxy @(Ladder, Tile, Position, Renderable, BoundaryBox, Layer, IsVisible))
+    cmapM_ $ \(Tile, e) -> destroy e (Proxy @(Tile, Position, Renderable, Layer, IsVisible))
+    cmapM_ $ \(Enemy _, e) -> destroy e (Proxy @(Enemy, Position, Velocity, Health, Renderable, BoundaryBox, Layer, IsVisible))
+    cmapM_ $ \(Heart, Item, e) -> destroy e (Proxy @(Heart, Item, Position, Renderable, BoundaryBox, Layer, IsVisible))
     cmap $ \(Player, Position _) -> Position playerPos
     generateMap
 
 startDungeonAction :: System' ()
 startDungeonAction = do
-    _ <- newEntity (Player, Position playerPos, Velocity (V2 0 0), Texture RenTexture { textureRef = "player-idle", textureLayer = 2, animationFrame = Just 0, textureVisible = True },  BoundaryBox (16, 26) (0, -11), Health 100)
-    _ <- newEntity (CombatPlayer, Position combatPlayerPos, Texture RenTexture { textureRef = "player-idle", textureLayer = 2, animationFrame = Just 0, textureVisible = False })
+    _ <- newEntity (Player, Position playerPos, Velocity (V2 0 0), Texture RenTexture { textureRef = "player-idle", animationFrame = Just 0 },  BoundaryBox (16, 26) (0, -11), Health 100, Layer 2, IsVisible True)
+    _ <- newEntity (CombatPlayer, Position combatPlayerPos, Texture RenTexture { textureRef = "player-idle", animationFrame = Just 0 }, Layer 2, IsVisible False)
     generateMap
     let offsetX = tileSize / 2 - 1280/2
         offsetY = tileSize / 2 - 720/2
@@ -253,36 +237,36 @@ startDungeonAction = do
             return $ "tile" ++ show n
     tileList <- liftIO $ sequence [ do
         t <- getTileSprite
-        let sref = Texture RenTexture { textureRef = t, textureLayer = 0, animationFrame = Nothing, textureVisible = False }
+        let sref = Texture RenTexture { textureRef = t, animationFrame = Nothing }
             pos = Position (V2 (fromIntegral x * tileSize) (- fromIntegral y * tileSize))
 
         return (sref, pos)
         | x <- [0..ceiling (1280 / tileSize)], y <- [0..ceiling (720 / tileSize)] ]
-    forM_ tileList $ \(s, p) -> void $ newEntity (CombatTile, p, s)
-    cmap $ \(TitleScreen, r) -> makeInvisible r
-    cmap $ \(MainMenuUIElement, r) -> makeInvisible r
-    cmap $ \(SettingsUIElement, r) -> makeInvisible r
+    forM_ tileList $ \(s, p) -> void $ newEntity (CombatTile, p, s, Layer 0, IsVisible False)
+    cmap $ \(TitleScreen, IsVisible _) -> IsVisible False
+    cmap $ \(MainMenuUIElement, IsVisible _) -> IsVisible False
+    cmap $ \(SettingsUIElement, IsVisible _) -> IsVisible False
     set global DungeonState
 
 toMenuAction :: System' ()
 toMenuAction = do
     -- Destroy all entities except the transition
     -- Destroy all map entities
-    cmapM_ $ \(Wall, e) -> destroy e (Proxy @(Wall, Tile, Position, Renderable, BoundaryBox))
-    cmapM_ $ \(Ladder, e) -> destroy e (Proxy @(Ladder, Tile, Position, Renderable, BoundaryBox))
-    cmapM_ $ \(Tile, e) -> destroy e (Proxy @(Tile, Position, Renderable))
-    cmapM_ $ \(Enemy _, e) -> destroy e (Proxy @(Enemy, Position, Velocity, Health, Renderable, BoundaryBox))
-    cmapM_ $ \(Heart, Item, e) -> destroy e (Proxy @(Heart, Item, Position, Renderable, BoundaryBox))
+    cmapM_ $ \(Wall, e) -> destroy e (Proxy @(Wall, Tile, Position, Renderable, BoundaryBox, Layer, IsVisible))
+    cmapM_ $ \(Ladder, e) -> destroy e (Proxy @(Ladder, Tile, Position, Renderable, BoundaryBox, Layer, IsVisible))
+    cmapM_ $ \(Tile, e) -> destroy e (Proxy @(Tile, Position, Renderable, Layer, IsVisible))
+    cmapM_ $ \(Enemy _, e) -> destroy e (Proxy @(Enemy, Position, Velocity, Health, Renderable, BoundaryBox, Layer, IsVisible))
+    cmapM_ $ \(Heart, Item, e) -> destroy e (Proxy @(Heart, Item, Position, Renderable, BoundaryBox, Layer, IsVisible))
     -- Destroy player entity
-    cmapM_ $ \(Player, e) -> destroy e (Proxy @(Player, Position, Velocity, Renderable, BoundaryBox, Health))
+    cmapM_ $ \(Player, e) -> destroy e (Proxy @(Player, Position, Velocity, Renderable, BoundaryBox, Health, Layer, IsVisible))
     -- Destroy combat entities
-    cmapM_ $ \(CombatPlayer, e) -> destroy e (Proxy @(CombatPlayer, Position, Renderable))
-    cmapM_ $ \(CombatEnemy _, e) -> destroy e (Proxy @(CombatEnemy, Position, Renderable))
+    cmapM_ $ \(CombatPlayer, e) -> destroy e (Proxy @(CombatPlayer, Position, Renderable, Layer, IsVisible))
+    cmapM_ $ \(CombatEnemy _, e) -> destroy e (Proxy @(CombatEnemy, Position, Renderable, Layer, IsVisible))
     -- Destroy Settings menu entities
-    cmap $ \(SettingsUIElement, r) -> makeInvisible r
-    cmap $ \(MainMenuUIElement, r) -> makeVisibile r
-    cmap $ \(TitleScreen, r) -> makeVisibile r
-    cmapM_ $ \(CombatUI, e) -> destroy e (Proxy @(CombatUI, Position, Renderable))
+    cmap $ \(SettingsUIElement, IsVisible _) -> IsVisible False
+    cmap $ \(MainMenuUIElement, IsVisible _) -> IsVisible True
+    cmap $ \(TitleScreen, IsVisible _) -> IsVisible True
+    cmapM_ $ \(CombatUI, e) -> destroy e (Proxy @(CombatUI, Position, Renderable, Layer, IsVisible))
     set global MenuState
 
 stepTransition :: Float -> System' ()
@@ -295,18 +279,18 @@ stepTransition dT = cmapM_ $ \(Transition p ang spd fired event, e) -> do
         StartDungeon -> startDungeonAction
         ToMenu -> toMenuAction
         ToSettings -> do
-            cmap $ \(MainMenuUIElement, r) -> makeInvisible r
-            cmap $ \(SettingsUIElement, r) -> makeVisibile r
+            cmap $ \(MainMenuUIElement, IsVisible _) -> IsVisible False
+            cmap $ \(SettingsUIElement, IsVisible _) -> IsVisible True
             set global SettingsState
     if p' >= 1 then
-        destroy e (Proxy @(Transition, Position, Renderable))
+        destroy e (Proxy @(Transition, Position, Renderable, Layer, IsVisible))
     else do
         set e Transition { trProgress = p', trAngle = ang, trSpeed = spd, trCoverEventFired = fired || p' >= 0.5, trEvent = event }
         let t = easeInOut (min 1 p)
             dist = Utils.lerp (-2000) 2000 t
             dx = dist * cos ang
             dy = dist * sin ang
-        player <- cfold (\_ (Player, Position p, r) -> if isVisible r then Just p else Nothing) Nothing
+        player <- cfold (\_ (Player, Position p, IsVisible r) -> if r then Just p else Nothing) Nothing
         let pos = case player of
                 Just (V2 px py) -> V2 (dx - 1300 + px - 1280/2 + 32) (dy + 1200 - (- py - 720/2 + 32))
                 Nothing -> V2 (dx - 1300) (dy + 1200)
@@ -314,14 +298,14 @@ stepTransition dT = cmapM_ $ \(Transition p ang spd fired event, e) -> do
 
 stepFloatingText :: Float -> System' ()
 stepFloatingText dt = cmapM_ $ \(ft, e) -> if currLifetime ft + dt >= lifetime ft then
-        destroy e (Proxy @(FloatingText, Position, Renderable, Velocity))
+        destroy e (Proxy @(FloatingText, Position, Renderable, Velocity, Layer, IsVisible))
     else
         set e $ ft { currLifetime = currLifetime ft + dt }
 
 step :: Float -> System' ()
 step dT = do
     gs <- get global
-    player <- cfold (\_ (Player, Position p, r) -> if isVisible r then Just p else Nothing) Nothing
+    player <- cfold (\_ (Player, Position p, IsVisible r) -> if r then Just p else Nothing) Nothing
     let func (V2 x y) = case player of
             Just (V2 px py) -> V2 (x - px + 1280/2 - 32) ((-y) + py + 720/2 - 32)
             Nothing -> V2 x (-y)
@@ -336,11 +320,3 @@ step dT = do
         MenuState -> stepMenu dT
         SettingsState -> stepSettings dT
         _            -> return ()
-
-isVisible :: Renderable -> Bool
-isVisible (Texture t) = textureVisible t
-isVisible (Text t) = textVisible t
-isVisible (Point p) = pointVisible p
-isVisible (Line l) = lineVisible l
-isVisible (Rectangle r) = rectVisible r
-isVisible (FilledRectangle r) = rectVisible r
