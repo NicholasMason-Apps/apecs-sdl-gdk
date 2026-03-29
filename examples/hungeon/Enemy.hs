@@ -26,14 +26,14 @@ makeEnemy :: Enemy -> Position -> System' Entity
 makeEnemy enemy pos = do
     let
         (sref, bbox) = case enemyType enemy of
-            Reaper -> (Texture RenTexture { textureRef = "reaper-idle", textureLayer = 2, animationFrame = Just 0, textureVisible = True }, BoundaryBox (16, 26) (-1, -12))
-            Vampire -> (Texture RenTexture { textureRef = "vampire-idle", textureLayer = 2, animationFrame = Just 0, textureVisible = True }, BoundaryBox (16, 30) (-6, -11))
-            Skeleton -> (Texture RenTexture { textureRef = "skeleton-idle", textureLayer = 2, animationFrame = Just 0, textureVisible = True }, BoundaryBox (24, 26) (-2, -11))
-            GoldenReaper -> (Texture RenTexture { textureRef = "golden-reaper-idle", textureLayer = 2, animationFrame = Just 0, textureVisible = True }, BoundaryBox (16, 26) (-1, -12))
+            Reaper -> (Texture RenTexture { textureRef = "reaper-idle", animationFrame = Just 0 }, BoundaryBox (16, 26) (-1, -12))
+            Vampire -> (Texture RenTexture { textureRef = "vampire-idle", animationFrame = Just 0 }, BoundaryBox (16, 30) (-6, -11))
+            Skeleton -> (Texture RenTexture { textureRef = "skeleton-idle", animationFrame = Just 0 }, BoundaryBox (24, 26) (-2, -11))
+            GoldenReaper -> (Texture RenTexture { textureRef = "golden-reaper-idle", animationFrame = Just 0 }, BoundaryBox (16, 26) (-1, -12))
     n <- case enemyType enemy of
         GoldenReaper -> liftIO $ randomRIO (150, 200)
         _ -> liftIO $ randomRIO (35, 50)
-    newEntity (enemy, pos, Velocity (V2 0 0), sref, bbox, Health n)
+    newEntity (enemy, pos, Velocity (V2 0 0), sref, bbox, Health n, Layer 2, IsVisible True)
 
 stepEnemyAI :: System' ()
 stepEnemyAI = cmapM_ $ \(Player, Position posP) -> do

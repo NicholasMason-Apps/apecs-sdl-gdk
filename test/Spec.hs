@@ -12,7 +12,7 @@ import Test.Hspec
 import Test.QuickCheck
 import GDK.Systems (initialise, makeWorld', stepAnimations)
 import Apecs
-import GDK.Types (Config(..), Renderable(..), Position(..), Time(..), Renderer(..), Window(..), TargetFPS(..), Camera(..), defaultConfig)
+import GDK.Types (Config(..), Renderable(..), Position(..), Time(..), Renderer(..), Window(..), TargetFPS(..), Camera(..), IsVisible(..), defaultConfig)
 import GDK.Texture (TextureData(..), Animation(..), TextureMap(..), RenTexture(..), loadTexture)
 import qualified SDL
 import qualified Data.Text as T
@@ -46,12 +46,12 @@ main = hspec $ do
                 test2 = TextureData { texture = tex, animation = Just Animation { frameCount = 2, frameSpeed = 0.1, next = "test1" }}
             runSystem (do
                 modify global $ \(TextureMap ts) -> TextureMap (Map.insert "test2" test2 (Map.insert "test1" test1 ts))
-                _ <- newEntity (Texture (RenTexture { textureRef = "test1", textureLayer = 0, animationFrame = Just 0, textureVisible = True }))
+                _ <- newEntity (Texture (RenTexture { textureRef = "test1", animationFrame = Just 0 }), IsVisible True)
                 stepAnimations 0.1
                 en <- cfold (\acc r -> case r of
                         Texture t -> Just t
                         _ -> acc) Nothing
-                liftIO $ en `shouldBe` (Just $ RenTexture { textureRef = "test1", textureLayer = 0, animationFrame = Just 1, textureVisible = True })) w
+                liftIO $ en `shouldBe` (Just $ RenTexture { textureRef = "test1", animationFrame = Just 1 })) w
         it "Correctly loops to the next animation" $ do
             w <- initWorld
             (_, renderer) <- initialise w testConfig
@@ -60,13 +60,13 @@ main = hspec $ do
                 test2 = TextureData { texture = tex, animation = Just Animation { frameCount = 2, frameSpeed = 0.1, next = "test1" }}
             runSystem (do
                 modify global $ \(TextureMap ts) -> TextureMap (Map.insert "test2" test2 (Map.insert "test1" test1 ts))
-                _ <- newEntity (Texture (RenTexture { textureRef = "test1", textureLayer = 0, animationFrame = Just 0, textureVisible = True }))
+                _ <- newEntity (Texture (RenTexture { textureRef = "test1", animationFrame = Just 0 }), IsVisible True)
                 stepAnimations 0.1
                 stepAnimations 0.1
                 en <- cfold (\acc r -> case r of
                         Texture t -> Just t
                         _ -> acc) Nothing
-                liftIO $ en `shouldBe` (Just $ RenTexture { textureRef = "test2", textureLayer = 0, animationFrame = Just 0, textureVisible = True })) w
+                liftIO $ en `shouldBe` (Just $ RenTexture { textureRef = "test2", animationFrame = Just 0 })) w
     describe "GDK.Texture.loadTexture" $ do
         it "Loads a valid texture into the TextureMap" $ do
             w <- initWorld

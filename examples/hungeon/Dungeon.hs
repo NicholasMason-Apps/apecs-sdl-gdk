@@ -42,11 +42,11 @@ handleEnemyCollisions dT = cmapM_ $ \(Player, Position posP, v, bbp) -> do
                 Nothing -> do
                     et <- get e :: System' Enemy
                     let t = case enemyType et of
-                            Reaper -> Texture RenTexture { textureRef = "reaper-idle", textureLayer = 2, animationFrame = Just 0, textureVisible = True }
-                            Vampire -> Texture RenTexture { textureRef = "vampire-idle", textureLayer = 2, animationFrame = Just 0, textureVisible = True }
-                            Skeleton -> Texture RenTexture { textureRef = "skeleton-idle", textureLayer = 2, animationFrame = Just 0, textureVisible = True }
-                            GoldenReaper -> Texture RenTexture { textureRef = "golden-reaper-idle", textureLayer = 2, animationFrame = Just 0, textureVisible = True }
-                    _ <- newEntity (CombatEnemy e, Position combatEnemyPos, t)
+                            Reaper -> Texture RenTexture { textureRef = "reaper-idle", animationFrame = Just 0 }
+                            Vampire -> Texture RenTexture { textureRef = "vampire-idle", animationFrame = Just 0 }
+                            Skeleton -> Texture RenTexture { textureRef = "skeleton-idle", animationFrame = Just 0 }
+                            GoldenReaper -> Texture RenTexture { textureRef = "golden-reaper-idle", animationFrame = Just 0 }
+                    _ <- newEntity (CombatEnemy e, Position combatEnemyPos, t, Layer 2, IsVisible True)
                     set global $ CombatTurn PlayerTurn
                     startTransition (pi / 4) 1.0 ToCombat
         Nothing -> return ()
@@ -76,7 +76,7 @@ updatePlayerMovement = do
         cmapM_ $ \(Player, r, e) -> case r of
             Texture rt -> do
                 set e (Velocity (V2 0 0))
-                set e (Texture rt { textureRef = "player-idle", textureLayer = 2, animationFrame = Just 0 })
+                set e (Texture rt { textureRef = "player-idle", animationFrame = Just 0 })
             _ -> return ()
 
 ladderCollision :: System' ()
@@ -91,7 +91,7 @@ heartCollision :: System' ()
 heartCollision = cmapM_ $ \(Player, Position posP, bbP, Health hp, ep) -> do
     cmapM_ $ \(Heart, Position posH, bbH, eh) -> when (checkBoundaryBoxIntersection posP bbP posH bbH) $ do
         set ep $ Health $ min 100 (hp + 50)
-        destroy eh (Proxy @(Heart, Position, BoundaryBox, Item, Renderable))
+        destroy eh (Proxy @(Heart, Position, BoundaryBox, Item, Renderable, Layer, IsVisible))
 
 stepDungeon :: Float -> System' ()
 stepDungeon dT = do

@@ -139,21 +139,18 @@ newtype Countdown = Countdown Float deriving (Show, Eq, Num)
 instance Component Countdown where type Storage Countdown = Unique Countdown 
 ```
 
-For the storing of the things to draw, we will make use the `Renderable` and `Position` components exposed by `apces-sdl-gdk`. 
+For the storing of the things to draw, we will make use of the `Renderable`, `Position`, `Colour`, and `Layer` components exposed by `apces-sdl-gdk`. 
 
 ## Explaining a subset of `apecs-sdl-gdk`
 
-A subset of `Renderable` and `Position` are shown below.
+A subset of `Renderable`, and `Position`, `Layer` and `Colour` are shown below.
 
 ```haskell
 data RenTexture = RenTexture
     { textureRef :: String
     -- ^ Identifier for the texture to render
-    , textureLayer :: Int
-    -- ^ layer for draw order
     , animationFrame :: Maybe Int
     -- ^ Frame index for animations, if applicable
-    , textureVisible :: Bool
     } deriving (Eq, Show)
 
 -- | Component used to tag a single Entity with data for it to be rendered
@@ -168,16 +165,33 @@ instance Component Renderable where type Storage Renderable = Map Renderable
 
 newtype Position = Position (V2 Float) deriving (Show, Eq)
 instance Component Position where type Storage Position = Map Position
+
+-- | Associate a colour with an entity for rendering. If no colour is supplied, it will default to black
+newtype Colour = Colour (V4 Word8) deriving (Show, Eq)
+instance Component Colour where type Storage Colour = Map Colour
+
+-- | Layer Component for draw ordering, higher layers are drawn on top of lower layers. Indexing starts at 0
+newtype Layer = Layer Int deriving (Show, Eq, Ord)
+instance Component Layer where type Storage Layer = Map Layer
 ```
 
-`Renderable` is used to tag a single Entity with data for it to be drawn, using a Sum type to pattern match on what is to be drawn. Each constructor of `Renderable` then has a Record to data about it. The Records have many similarities, but also some naunces:
+`Renderable` is used to tag a single Entity with data for it to be drawn, using a Sum type to pattern match on what is to be drawn. Each constructor of `Renderable` then has a Record to store data about it. The Records have many similarities, but also some naunces:
 
-- All Records store the layer to draw them on, and a `Bool` to determine if they are to be drawn or not.
-- All Records but `RenTexture` store the colour to draw the texture in
 - Only `RenTexture` stores a `Maybe Int` to represent which frame of an animation the texture is on
 - Both `RenTexture` and `RenText` store a reference String, which is used as a key for accessing the `TextureMap` and `FontMap` respectively. This reduces memory usage as we abide by the flyweight pattern
 
 `Position` simply represents the position of the Entity with 2D space. An important thing to note is that in SDL, all things are drawn with the top-left being the point of origin, and the x and y axes increase to the right and down respectively.
+
+`Layer` represents the layer that the Entity will be drawn on. As the comment says, higher layers are drawn on lower layers.
+
+`Colour` simply attaches a colour to Entities.
+
+It is important to note that `Renderable`, `Position`, and `Layer` are required for Entities to be drawn. `IsVisible` and `Colour` are optional
+
+- If `IsVisible` is not attached to the Entity, it will default to assuming the Entity is visible.
+    - The purpose of `IsVisible` is to allow control over what is drawn more explicitly, e.g. with different game scenes#
+- If `Colour` is not supplied, the colour will default to black
+    - Note `Colour` is not needed for Entities whose `Renderable` component is a `Texture`
 
 For loading textures or fonts into their respective maps, `apecs-sdl-gdk` exposes the following two functions:
 
@@ -191,9 +205,9 @@ loadTexture :: (..) => SDL.Renderer -> FilePath -> String -> Maybe Animation -> 
 loadTexture r path ident anim = ...
 ```
 
-The actual drawing of everything can either be done yourself by writing your own code, or using `draw` exposed by `apecs-sdl-gdk`. `draw` handles the entire rendering pipeline for you by making use of the `Renderable` and `Position` components and allows you to simply write game logic.
+The actual drawing of everything can either be done yourself by writing your own code, or using `draw` exposed by `apecs-sdl-gdk`. `draw` handles the entire rendering pipeline for you by making use of the `Renderable`, `Position`, `Layer`, and `Colour` components and allows you to simply write game logic.
 
-Alongside `Renderable` and `Position`, `apecs-sdl-gdk` also exposes some other important components. The first of which is `Config`
+Alongside `Renderable`, `Position`, `Colour`, and `Layer`, `apecs-sdl-gdk` also exposes some other important components. The first of which is `Config`
 
 ```haskell
 -- | Configuration settings for the game upon initialisation
@@ -298,17 +312,18 @@ Now we will start writing our first system!
 ```haskell
 initialise :: System' ()
 initialise = do
-    let rly = RenLine { lineColour = V4 0 0 0 255, lineLayer = 0, lineX = 0, lineY = 600, lineVisible = True}
-        rlx = rly { lineY = 0, lineX = 600}
-    line1 <- newEntity (Line rly, Position (V2 200 0))
-    line2 <- newEntity (Line rly, Position (V2 400 0))
-    line3 <- newEntity (Line rlx, Position (V2 0 200))
-    void $ newEntity (Line rlx, Position (V2 0 400))
+    let rly = RenLine { lineX = 0, lineY = 600 }
+        rlx = RenLine { lineY = 0, lineX = 600}
+    line1 <- newEntity (Line rly, Position (V2 200 0), Colour (V4 0 0 0 255), Layer 0, IsVisible True)
+    line2 <- newEntity (Line rly, Position (V2 400 0), Colour (V4 0 0 0 255), Layer 0, IsVisible True)
+    line3 <- newEntity (Line rlx, Position (V2 0 200), Colour (V4 0 0 0 255), Layer 0, IsVisible True)
+    void $ newEntity (Line rlx, Position (V2 0 400), Colour (V4 0 0 0 255), Layer 0, IsVisible True)
 ```
 
 `initialise`, as the name suggests, initialises what we need for our game world. Due to each `Global` component having a `Monoid` instance, their initial value is taken care of for us. Therefore, all we need to do is set up the visual game board by creating lines to be rendered. This is done by:
 
 - Using the `Renderable` and `Position` components, we create two vertical and horizontal lines.
+- We also tag each Entity with a Colour component to set it black, make them visible, and render them on the 0th layer
 - Inside `RenLine`, `lineX` and `lineY` represent the x and y offset of the line's endpoint from its starting position respectively.
 - We use `newEntity` to create a new Entity within our game world with the components specified.
 
@@ -355,11 +370,11 @@ updateBoard (Board b) r c t = do
         y = 200 * fromIntegral c
     case t of
         Nought -> do
-           _ <- newEntity (Rectangle RenRectangle { rectSize = V2 100 100, rectColour = V4 0 0 0 255, rectLayer = 1, rectVisible = True }, Position (V2 (x+50) (y+50)))
+           _ <- newEntity (Rectangle RenRectangle { rectSize = V2 100 100 }, Position (V2 (x+50) (y+50)), Colour (V4 0 0 0 255), Layer 1, IsVisible True)
            modify global $ \(_ :: Turn) -> CheckWinPlayer
         Cross -> do
-            _ <-newEntity (Line RenLine { lineColour = V4 0 0 0 255, lineLayer = 1, lineX = 100, lineY = 100, lineVisible = True }, Position (V2 (x+50) (y+50)))
-            _ <- newEntity (Line RenLine { lineColour = V4 0 0 0 255, lineLayer = 1, lineX = -100, lineY = 100, lineVisible = True}, Position (V2 (x + 150) (y+50)))
+            _ <-newEntity (Line RenLine { lineX = 100, lineY = 100 }, Position (V2 (x+50) (y+50)), Colour (V4 0 0 0 255), Layer 1, IsVisible True)
+            _ <- newEntity (Line RenLine { lineX = -100, lineY = 100 }, Position (V2 (x + 150) (y+50)), Colour (V4 0 0 0 255), Layer 1, IsVisible True)
             modify global $ \(_ :: Turn) -> CheckWinAI
         Empty -> return ()
     modify global $ \(Board _) -> Board b'
@@ -447,23 +462,32 @@ stepCheckWin dt t = do
                 c3' = fromIntegral c3
                 r1' = fromIntegral r1
                 r3' = fromIntegral r3
-                rl = RenLine { lineColour = V4 255 0 0 255
-                             , lineLayer = 1
-                             , lineX = 0
-                             , lineY = 0
-                             , lineVisible = True}
+                rl = RenLine { lineX = 0
+                             , lineY = 0 }
             if c1' == c3' then
                 void $ newEntity (Line rl { lineX = 600
-                                          , lineY = 0 }, Position (V2 0 (200 * c1' + 100)))
+                                          , lineY = 0 }, Position (V2 0 (200 * c1' + 100))
+                                          , Layer 2
+                                          , Colour (V4 255 0 0 255)
+                                          , IsVisible True)
             else if r1' == r3' then
                 void $ newEntity (Line rl { lineX = 0
-                                          , lineY = 600 }, Position (V2 (200 * r1' + 100) 0))
+                                          , lineY = 600 }, Position (V2 (200 * r1' + 100) 0)
+                                          , Layer 2
+                                          , Colour (V4 255 0 0 255)
+                                          , IsVisible True)
             else if (c1' > c3') then
                 void $ newEntity (Line rl { lineX = -600
-                                          , lineY = 600 }, Position (V2 600 0))
+                                          , lineY = 600 }, Position (V2 600 0)
+                                          , Layer 2
+                                          , Colour (V4 255 0 0 255)
+                                          , IsVisible True)
             else
                 void $ newEntity (Line rl { lineX = 600
-                                          , lineY = 600 }, Position(V2 0 0))
+                                          , lineY = 600 }, Position(V2 0 0)
+                                          , Layer 2
+                                          , Colour (V4 255 0 0 255)
+                                          , IsVisible True)
             _ <- newEntity (Countdown 3.0)
             modify global $ \(_ :: Turn) -> Win
         Nothing -> if isFull then do
@@ -591,7 +615,7 @@ Our `main :: IO ()` function is the entrypoint into our program, and is used to 
 
 - `initialise` is used to create the SDL window and renderer context, and needs your Apecs `World`
 - `run` is the main game loop, which takes the entry point for stepping your game world, your event handler, and a draw function
-- `draw` which is the default draw function, and handles the entire rendering pipeline for you by using all entities which have `Renderable` and `Position` components
+- `draw` which is the default draw function, and handles the entire rendering pipeline for you by using all entities which have `Renderable`, `Position` and `Layer`, and optionally `Colour` and `IsVisible` components
 
 ```haskell
 main :: IO ()

@@ -1,8 +1,10 @@
 {-# LANGUAGE TemplateHaskellQuotes #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
-module GDK.Systems (initialise, run, makeWorld', stepAnimations) where
+module GDK.Systems (initialise, run, makeWorld', stepAnimations, getMaybe) where
 
 import Apecs
 import GDK.Types
@@ -16,7 +18,7 @@ import Language.Haskell.TH.Syntax
 import Control.Monad (unless)
 import qualified SDL.Raw
 import qualified Data.Map as Map
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isNothing, fromJust)
 import System.Exit (exitSuccess)
 import Linear
 
@@ -58,6 +60,7 @@ run :: forall w.
      (Has w IO Time
      , Has w IO TextureMap
      , Get w IO Renderable
+     , Has w IO IsVisible
      , Get w IO Config)
      => w -- ^ World state
      -> SDL.Renderer -- ^ SDL renderer context
@@ -108,19 +111,31 @@ run w r window step eventHandler draw = do
     exitSuccess
 
 makeWorld' :: [Name] -> Q [Dec]
-makeWorld' cTypes = makeWorld "World" (cTypes ++ [''TextureMap, ''FontMap, ''Position, ''Time, ''Renderable, ''Renderer, ''Window, ''Camera, ''Config])
+makeWorld' cTypes = makeWorld "World" (cTypes ++ [''TextureMap
+                                                 , ''FontMap
+                                                 , ''Position
+                                                 , ''Time
+                                                 , ''Renderable
+                                                 , ''Renderer
+                                                 , ''Window
+                                                 , ''Camera
+                                                 , ''Config
+                                                 , ''Layer
+                                                 , ''IsVisible
+                                                 , ''Colour])
 
 stepAnimations :: forall w.
                 (Has w IO Time
                 , Has w IO TextureMap
                 , Get w IO Renderable
                 , Set w IO Renderable
+                , Has w IO IsVisible
                 , Members w IO Renderable)
                 => Float
                 -> System w ()
-stepAnimations dt = cmapM $ \r -> do
+stepAnimations dt = cmapM $ \(r, e) -> do
     case r of
-        Texture t -> if textureVisible t then do
+        Texture t -> getMaybe e (Proxy @IsVisible) >>= \res -> if isNothing res || (let IsVisible visible = fromJust res in visible) then do
                 Time t' <- get global
                 TextureMap m <- get global
                 let tex = textureRef t `Map.lookup` m
@@ -145,3 +160,6 @@ stepAnimations dt = cmapM $ \r -> do
                             Nothing -> return r
             else return r
         _ -> return r
+
+getMaybe :: forall w m c. Get w m c => Entity -> Proxy c -> SystemT w m (Maybe c)
+getMaybe e p = exists e p >>= \y -> if y then Just <$> get e else return Nothing

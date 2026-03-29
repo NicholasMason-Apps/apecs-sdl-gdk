@@ -32,11 +32,8 @@ data Animation = Animation
 data RenTexture = RenTexture
     { textureRef :: String
     -- ^ Identifier for the texture to render
-    , textureLayer :: Int
-    -- ^ layer for draw order
     , animationFrame :: Maybe Int
     -- ^ Frame index for animations, if applicable
-    , textureVisible :: Bool
     } deriving (Eq, Show)
 
 -- | Stores the SDL textures loaded in the game, mapped by their identifiers

@@ -63,7 +63,7 @@ stepPlayerTurn dT = do
                 set global $ KeysPressed (GkSpace `Set.delete` ks)
                 set global $ CombatTurn PlayerAttacking
                 cmapM_ $ \(CombatPlayer, s) -> do
-                    set s (Texture RenTexture { textureRef = "player-knife-attack", textureLayer = 2, animationFrame = Just 0, textureVisible = True })
+                    set s (Texture RenTexture { textureRef = "player-knife-attack", animationFrame = Just 0 })
                     set s (Position (combatEnemyPos - V2 tileSize 0))
                     parryUI
             when (GkE `Set.member` ks) $ do
@@ -77,13 +77,13 @@ stepPlayerTurn dT = do
                 set global $ CombatTurn PlayerAttacking
                 set global CombatAttackSelectUI
                 set global $ KeysPressed (GkE `Set.delete` ks)
-                cmapM_ $ \(CombatPlayer, s) -> set s (Texture RenTexture { textureRef = "player-fire-attack", textureLayer = 2, animationFrame = Just 0, textureVisible = True })
+                cmapM_ $ \(CombatPlayer, s) -> set s (Texture RenTexture { textureRef = "player-fire-attack", animationFrame = Just 0 })
                 parryUI
             when (GkQ `Set.member` ks) $ do
                 set global $ CombatTurn PlayerAttacking
                 set global CombatAttackSelectUI
                 set global $ KeysPressed (GkQ `Set.delete` ks)
-                cmapM_ $ \(CombatPlayer, s) -> set s (Texture RenTexture { textureRef = "player-prismatic-attack", textureLayer = 2, animationFrame = Just 0, textureVisible = True })
+                cmapM_ $ \(CombatPlayer, s) -> set s (Texture RenTexture { textureRef = "player-prismatic-attack", animationFrame = Just 0 })
                 parryUI
             when (GkEsc `Set.member` ks) $ do
                 set global CombatAttackSelectUI
@@ -188,7 +188,7 @@ stepEnemyAttack dT = do
                     when (textureRef rt' /= "player-hit") $ do
                         if textureRef rt' == "player-shield" && fromMaybe 0 (animationFrame rt') `Set.member` playerShieldFrames then do
                             modify global $ \(ShieldCooldown _) -> ShieldCooldown 0
-                            void $ newEntity (FloatingText 0 1.0, Position (combatPlayerPos + V2 0 20), Text RenText { fontRef = "Roboto-Regular", displayText = "Blocked!", textColour = V4 255 255 255 255, textLayer = 3, textVisible = True }, Velocity (V2 0 20))
+                            void $ newEntity (FloatingText 0 1.0, Position (combatPlayerPos + V2 0 20), Text RenText { fontRef = "Roboto-Regular", displayText = "Blocked!" }, Colour (V4 255 255 255 255), Layer 3, IsVisible True, Velocity (V2 0 20))
                         else cmapM_ $ \(Player, Health hp) -> if hp - enemyDamage > 0 then do
                                 cmap $ \(Player, Health hp) -> Health (hp - enemyDamage)
                                 set cp (Texture rt' { textureRef = "player-hit", animationFrame = Just 1 })

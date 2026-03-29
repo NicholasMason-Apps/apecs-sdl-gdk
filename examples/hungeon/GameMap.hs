@@ -330,18 +330,18 @@ gameRoomToSprites = cmapM_ $ \(gr, Position (V2 grx gry), e) -> do
       offsetY = gry - (fromIntegral h * tileSize / 2) + halfAdjust h + tileSize / 2
   spriteList <- liftIO $ sequence [ do
     (s,t) <- selectSprite c (x,y)
-    let sref = Texture RenTexture { textureRef = s, textureLayer = 1, animationFrame = Nothing, textureVisible = True }
+    let sref = Texture RenTexture { textureRef = s, animationFrame = Nothing }
         pos = Position (V2 (offsetX + fromIntegral x * tileSize) (offsetY + fromIntegral (h - 1 - y) * tileSize))
     return (sref, pos, t)
     | (y, row) <- zip [0..] layout, (x, c) <- zip [0..] row, tileCheck c ]
   forM_ spriteList $ \(s, p, t) -> do
       case t of
-        'T' -> void $ newEntity (Floor, Tile, p, s)
-        'L' -> void $ newEntity (Ladder, Tile, p, s, BoundaryBox (32,32) (0,0))
+        'T' -> void $ newEntity (Floor, Tile, p, s, Layer 1, IsVisible True)
+        'L' -> void $ newEntity (Ladder, Tile, p, s, BoundaryBox (32,32) (0,0), Layer 1, IsVisible True)
         'H' -> do
-          void $ newEntity (Floor, Tile, p, Texture RenTexture { textureRef = "tile1", textureLayer = 0, animationFrame = Nothing, textureVisible = True } ) -- Add a floor tile under the heart so it doesn't look weird when the heart is on top of a wall tile
-          void $ newEntity (Heart, Item, p, s, BoundaryBox (32,32) (0,0))
-        _   -> void $ newEntity (Wall, Tile, p, s, BoundaryBox (64,64) (0,0))
+          void $ newEntity (Floor, Tile, p, Texture RenTexture { textureRef = "tile1", animationFrame = Nothing }, Layer 0, IsVisible True ) -- Add a floor tile under the heart so it doesn't look weird when the heart is on top of a wall tile
+          void $ newEntity (Heart, Item, p, s, BoundaryBox (32,32) (0,0), Layer 1, IsVisible True)
+        _   -> void $ newEntity (Wall, Tile, p, s, BoundaryBox (64,64) (0,0), Layer 1, IsVisible True)
   destroy e (Proxy @(GameRoom, Position))
 
 -- Given a direction and two room layouts, finds the position for the new layout relative to the current layout
