@@ -108,4 +108,4 @@ main = hspec $ do
                 result <- try (loadFont "test/resources/nonexistent.ttf" "badFont" 24)
                 case result of
                     Left (e :: SDL.SDLException) -> liftIO $ return () -- Expected exception, test passes
-                    Right _ -> liftIO $ expectationFailure "Expected TTFException was not thrown") w
+                    Right _ -> liftIO $ expectationFailure "Expected SDLException was not thrown") w
