@@ -4,12 +4,12 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module GDK.Systems (initialise, run, makeWorld', stepAnimations, getMaybe) where
+module Cadence.Systems (initialise, run, makeWorld', stepAnimations, getMaybe) where
 
 import Apecs
-import GDK.Types
-import GDK.Texture
-import GDK.Font (FontMap(..), loadFont)
+import Cadence.Types
+import Cadence.Texture
+import Cadence.Font (FontMap(..), loadFont)
 import qualified SDL
 import qualified SDL.Font as TTF
 import qualified SDL.Image as IMG

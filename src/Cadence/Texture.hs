@@ -2,7 +2,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module GDK.Texture (TextureData(..), Animation(..), TextureMap(..), RenTexture(..), loadTexture) where
+module Cadence.Texture (TextureData(..), Animation(..), TextureMap(..), RenTexture(..), loadTexture) where
 
 import qualified SDL.Image as IMG
 import qualified SDL

@@ -1,14 +1,14 @@
 module Main (main) where
 
-import GDK.Systems
+import Cadence.Systems
 import Apecs
 import Types
 import Systems
-import GDK.Types
+import Cadence.Types
 import Linear
 import qualified SDL
 import Control.Monad (when)
-import GDK.Draw
+import Cadence.Draw
 import Input
 
 main :: IO ()

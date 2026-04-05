@@ -1,13 +1,13 @@
 = Introduction
 
-This document breaks down a very small game written using `apecs-sdl-gdk`. We will be making noughts-and-crosses (or tic-tac-toe depending on where you are from). The main focus of this document will be:
+This document breaks down a very small game written using `cadence`. We will be making noughts-and-crosses (or tic-tac-toe depending on where you are from). The main focus of this document will be:
 
-1. To highlight how to use `apecs-sdl-gdk`
+1. To highlight how to use `cadence`
 2. (Briefly) introduce how to use Apecs
-3. Explain what some of the `apecs-sdl-gdk` functions do under-the-hood
+3. Explain what some of the `cadence` functions do under-the-hood
 4. Highlight some useful tips for game development using Apecs and Haskell from my experience
 
-Whilst you can run the game by cloning this repository and running `stack run noughts-and-crosses`, I **strongly** recommend you write code yourself as you follow along, as it will help a lot to solidfy the basic concepts. Additionally, Apecs itself has a [tutorial](https://github.com/jonascarpay/apecs/blob/master/examples/Shmup.md), which whilst it does not use `apecs-sdl-gdk`, I also highly recommend walking through it as well for a more comprehensive overview of how to use Apecs specifically.
+Whilst you can run the game by cloning this repository and running `stack run noughts-and-crosses`, I **strongly** recommend you write code yourself as you follow along, as it will help a lot to solidfy the basic concepts. Additionally, Apecs itself has a [tutorial](https://github.com/jonascarpay/apecs/blob/master/examples/Shmup.md), which whilst it does not use `cadence`, I also highly recommend walking through it as well for a more comprehensive overview of how to use Apecs specifically.
 
 = Types and Top-Level Declarations
 
@@ -31,12 +31,12 @@ Next, we need some imports. To work with Apecs and create some game logic, we si
 
 > import Apecs
 
-Following this, we import `apecs-sdl-gdk`. The only thing to note here is that, since we will also reuse the `initialise` function name later on, we also import `GDK.Systems` qualified.
+Following this, we import `cadence`. The only thing to note here is that, since we will also reuse the `initialise` function name later on, we also import `Cadence.Systems` qualified.
 
-> import GDK.Systems hiding (initialise)
-> import qualified GDK.Systems as GDK
-> import GDK.Types
-> import GDK.Draw
+> import Cadence.Systems hiding (initialise)
+> import qualified Cadence.Systems as Cadence
+> import Cadence.Types
+> import Cadence.Draw
 
 Next we want to import `linear` for working with multi-dimensional vectors.
 
@@ -127,9 +127,9 @@ The code for the first four are shown below
 > newtype Countdown = Countdown Float deriving (Show, Eq, Num)
 > instance Component Countdown where type Storage Countdown = Unique Countdown 
 
-For the storing of the things to draw, we will make use of the `Renderable`, `Position`, `Colour`, and `Layer` components exposed by `apces-sdl-gdk`. 
+For the storing of the things to draw, we will make use of the `Renderable`, `Position`, `Colour`, and `Layer` components exposed by `cadence`. 
 
-== Explaining a subset of `apecs-sdl-gdk`
+== Explaining a subset of `cadence`
 
 A subset of `Renderable`, and `Position`, `Layer` and `Colour` are shown below.
 
@@ -179,7 +179,7 @@ It is important to note that `Renderable`, `Position`, and `Layer` are required 
 - If `Colour` is not supplied, the colour will default to black
     - Note `Colour` is not needed for Entities whose `Renderable` component is a `Texture`
 
-For loading textures or fonts into their respective maps, `apecs-sdl-gdk` exposes the following two functions:
+For loading textures or fonts into their respective maps, `cadence` exposes the following two functions:
 
 < -- | Load a font into the 'FontMap'
 < loadFont :: (..) => FilePath -> String -> Int -> SystemT w m ()
@@ -189,9 +189,9 @@ For loading textures or fonts into their respective maps, `apecs-sdl-gdk` expose
 < loadTexture :: (..) => SDL.Renderer -> FilePath -> String -> Maybe Animation -> SystemT w m ()
 < loadTexture r path ident anim = ...
 
-The actual drawing of everything can either be done yourself by writing your own code, or using `draw` exposed by `apecs-sdl-gdk`. `draw` handles the entire rendering pipeline for you by making use of the `Renderable`, `Position`, `Layer`, and `Colour` components and allows you to simply write game logic.
+The actual drawing of everything can either be done yourself by writing your own code, or using `draw` exposed by `cadence`. `draw` handles the entire rendering pipeline for you by making use of the `Renderable`, `Position`, `Layer`, and `Colour` components and allows you to simply write game logic.
 
-Alongside `Renderable`, `Position`, `Colour`, and `Layer`, `apecs-sdl-gdk` also exposes some other important components. The first of which is `Config`
+Alongside `Renderable`, `Position`, `Colour`, and `Layer`, `cadence` also exposes some other important components. The first of which is `Config`
 
 < -- | Configuration settings for the game upon initialisation
 < data Config = Config
@@ -214,7 +214,7 @@ A default config is also exposed to get code running quicker:
 
 < defaultConfig :: Config
 < defaultConfig = Config
-<     { windowTitle = "GDK Game"
+<     { windowTitle = "Cadence Game"
 <     , windowDimensions = (800, 600)
 <     , backgroundColor = V4 255 255 255 255
 <     , targetFPS = VSync
@@ -258,7 +258,7 @@ Following `Config`, there are these other Components:
 
 == Creating our Game World
 
-With all of our Components defined, we need to create our Game World type. In Apecs, this is done by writing `makeWorld "World" [..]`, however `apecs-sdl-gdk` exposes `makeWorld'`, which alongside your own Components, also initialises the game world to include the `apecs-sdl-gdk` specific components. Thus, we need to write the following:
+With all of our Components defined, we need to create our Game World type. In Apecs, this is done by writing `makeWorld "World" [..]`, however `cadence` exposes `makeWorld'`, which alongside your own Components, also initialises the game world to include the `cadence` specific components. Thus, we need to write the following:
 
 > makeWorld' [''Turn, ''Board, ''MousePosition, ''MouseButtons, ''Countdown]
 
@@ -530,14 +530,14 @@ For our case, this method is not ideal. To ensure we delete all the components c
 
 As you have probably noticed, all our step functions take in a `Float` named `dt`, but never actually use it. Whilst in practice you would simply adjust their type to never take it as an input (which is the right thing to do!), I wanted to reinforce the idea of passing around `dt`.
 
-When running a game with `apecs-sdl-gdk`, `dt` is given to your top-level step function, and represents the amount of time elapsed between the previous frame and the current frame in milliseconds. Therefore, in any case where you need to have frame specific timings, you will need to make use of the input `dt`.
+When running a game with `cadence`, `dt` is given to your top-level step function, and represents the amount of time elapsed between the previous frame and the current frame in milliseconds. Therefore, in any case where you need to have frame specific timings, you will need to make use of the input `dt`.
 
 Now that we have written all of the systems needed for our game logic, we have two things left to do:
 
 1. Write an event handler
 2. Write our `main :: IO ()` function
 
-In `apecs-sdl-gdk`, events are polled for you, and then passed onto your event handler as `[SDL.EventPayload]`. If you want to see all the possible events that are polled and sent for handling, please refer to the [SDL Documentation](https://hackage.haskell.org/package/sdl2-2.5.5.0/docs/SDL-Event.html#t:EventPayload). SDL's `EventPayload` makes use of Sum types and records for capturing all possible event payload, and so we will use top-level pattern matching for our event handlers
+In `cadence`, events are polled for you, and then passed onto your event handler as `[SDL.EventPayload]`. If you want to see all the possible events that are polled and sent for handling, please refer to the [SDL Documentation](https://hackage.haskell.org/package/sdl2-2.5.5.0/docs/SDL-Event.html#t:EventPayload). SDL's `EventPayload` makes use of Sum types and records for capturing all possible event payload, and so we will use top-level pattern matching for our event handlers
 
 > handlePayload :: [SDL.EventPayload] -> System' ()
 > handlePayload = mapM_ handleEvent
@@ -559,7 +559,7 @@ In `apecs-sdl-gdk`, events are polled for you, and then passed onto your event h
 >     | SDL.mouseButtonEventMotion ev == SDL.Released = modify global $ \(MouseButtons mbs) -> MouseButtons (Set.delete (SDL.mouseButtonEventButton ev) mbs)
 >     | otherwise = return ()
 
-Our `main :: IO ()` function is the entrypoint into our program, and is used to start our game. As mentioned, `apecs-sdl-gdk` exposes 3 main functions to help with this:
+Our `main :: IO ()` function is the entrypoint into our program, and is used to start our game. As mentioned, `cadence` exposes 3 main functions to help with this:
 
 - `initialise` is used to create the SDL window and renderer context, and needs your Apecs `World`
 - `run` is the main game loop, which takes the entry point for stepping your game world, your event handler, and a draw function
@@ -569,7 +569,7 @@ Our `main :: IO ()` function is the entrypoint into our program, and is used to 
 > main = do
 >     w <- initWorld
 >     runWith w initialise
->     (window, renderer) <- GDK.initialise w config
+>     (window, renderer) <- Cadence.initialise w config
 >     run w renderer window step handlePayload draw
 
 There are two new Apecs concepts here:
@@ -581,7 +581,7 @@ And just like that, our game is complete!
 
 = Tips, Tricks, and Advice for Developing Games in Haskell
 
-With our noughts-and-crosses game complete, I now want to just highlight and collate together some tips for developing games, especially with Apecs, SDL, and `apecs-sdl-gdk`
+With our noughts-and-crosses game complete, I now want to just highlight and collate together some tips for developing games, especially with Apecs, SDL, and `cadence`
 
 - Always try write game logic as separated as possible. Not only is this good software practice in general, but for Haskell specifically, it is one of the best practices you can follow as it will allow for more reusable, idiomatic code through the use of e.g. higher order functions.
 - When working with Apecs, since you are always inside a `System' a` Monad, it is very tempting to make use of functions like `cmapM`, `cfoldM`, etc. However, if you are able to write a Component logic which does not need to be inside a Monadic context, then you should not be inside one, as being inside one means you have the possiblity of introducing side effects.

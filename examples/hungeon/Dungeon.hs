@@ -21,8 +21,8 @@ import qualified Data.Map as Map
 import Control.Monad
 import qualified SDL
 import Enemy
-import GDK.Types
-import GDK.Texture
+import Cadence.Types
+import Cadence.Texture
 
 handleEnemyCollisions :: Float -> System' ()
 handleEnemyCollisions dT = cmapM_ $ \(Player, Position posP, v, bbp) -> do

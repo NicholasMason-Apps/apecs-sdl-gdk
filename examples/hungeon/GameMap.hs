@@ -25,8 +25,8 @@ import Data.Char (intToDigit)
 import System.IO.Unsafe ( unsafePerformIO )
 import Utils
 import Enemy (makeEnemy)
-import GDK.Texture
-import GDK.Types
+import Cadence.Texture
+import Cadence.Types
 
 getRoomSize :: [String] -> (Float, Float)
 getRoomSize layout = (fromIntegral (length (head layout)) * tileSize, fromIntegral (length layout) * tileSize)

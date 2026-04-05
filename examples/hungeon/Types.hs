@@ -13,8 +13,8 @@
 
 module Types where
 
-import GDK.Systems
-import GDK.Types
+import Cadence.Systems
+import Cadence.Types
 import Apecs
 import Linear
 import qualified Data.Set as Set

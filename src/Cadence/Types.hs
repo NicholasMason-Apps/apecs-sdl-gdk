@@ -8,7 +8,7 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# LANGUAGE InstanceSigs #-}
 
-module GDK.Types (Config(..)
+module Cadence.Types (Config(..)
                  , Renderable(..)
                  , FPS
                  , Position(..)
@@ -28,8 +28,8 @@ module GDK.Types (Config(..)
 import qualified SDL
 import Apecs
 import Data.Word (Word8)
-import GDK.Texture (RenTexture)
-import GDK.Font (RenText)
+import Cadence.Texture (RenTexture)
+import Cadence.Font (RenText)
 import GHC.TypeLits (Nat)
 import Linear
 import qualified Data.Vector.Mutable as MV
@@ -57,7 +57,7 @@ instance Component Config where type Storage Config = Global Config
 
 defaultConfig :: Config
 defaultConfig = Config
-    { windowTitle = "GDK Game"
+    { windowTitle = "Cadence Game"
     , windowDimensions = (800, 600)
     , backgroundColor = V4 255 255 255 255
     , targetFPS = VSync

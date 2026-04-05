@@ -19,9 +19,9 @@ import Data.Maybe ( isJust, fromMaybe, isNothing )
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import qualified SDL
-import GDK.Types
-import GDK.Texture
-import GDK.Font
+import Cadence.Types
+import Cadence.Texture
+import Cadence.Font
 
 playerKnifeAttackFrames :: Set.Set Int
 playerKnifeAttackFrames = Set.fromList [7]

@@ -5,7 +5,7 @@
 {-# LANGUAGE TypeApplications #-}
 
 
-module GDK.Draw (draw,
+module Cadence.Draw (draw,
                 drawTexture,
                 drawText,
                 drawLine,
@@ -16,10 +16,10 @@ module GDK.Draw (draw,
 import qualified SDL
 import qualified SDL.Font as TTF
 import Apecs
-import GDK.Types
-import GDK.Texture
-import GDK.Font (RenText(..), FontMap(..))
-import GDK.Systems (getMaybe)
+import Cadence.Types
+import Cadence.Texture
+import Cadence.Font (RenText(..), FontMap(..))
+import Cadence.Systems (getMaybe)
 import Control.Monad.IO.Class (MonadIO)
 import qualified Data.Vector.Mutable as MV
 import qualified Data.Text as T

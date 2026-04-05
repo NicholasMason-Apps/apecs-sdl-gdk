@@ -2,7 +2,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module GDK.Font (FontMap(..), RenText(..), loadFont) where
+module Cadence.Font (FontMap(..), RenText(..), loadFont) where
 
 import qualified SDL.Font as TTF
 import Apecs
