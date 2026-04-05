@@ -14,7 +14,7 @@ Below is a high-level overview of what `cadence` currently provides:
 
 Below are links to help people get familiar with the package and what it provides, as well as Apecs and SDL:
 - [Documentation](https://hackage.haskell.org/package/cadence/docs/Cadence.html)
-- [Tutorial](https://github.com/NicholasMason-Apps/cadence/blob/main/examples/naughts-and-crosses.md)
+- [Tutorial](https://github.com/NicholasMason-Apps/cadence/blob/main/examples/noughts-and-crosses.md)
 - [Apecs hackage page](https://hackage.haskell.org/package/apecs)
 - [SDL2 hackage page](https://hackage.haskell.org/package/sdl2)
 - [SDL2 TTF hackage page](https://hackage.haskell.org/package/sdl2-ttf)
