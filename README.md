@@ -22,6 +22,6 @@ Below are links to help people get familiar with the package and what it provide
 
 ## Examples
 
-Two examples are currently bundled with Cadence. To run them, execute either of the following:
+Two examples are currently bundled with Cadence. To run them, clone the repository and execute either of the following:
 - `stack run noughts-and-crosses`
 - `stack run hungeon`
