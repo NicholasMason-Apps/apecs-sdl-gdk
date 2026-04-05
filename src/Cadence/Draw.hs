@@ -108,9 +108,9 @@ draw renderer fps = do
         Point p -> getMaybe e (Proxy @IsVisible) >>= \res -> when (isNothing res || (let IsVisible visible = fromJust res in visible)) $ do
             IsVisible b <- get e
             when (isInView pos (0,0) && b) $ exists e (Proxy @Colour) >>= \c' -> if c' then
-                get e >>= \(Colour col) -> updateLayer n (drawPoint renderer p (cam pos) col)
+                get e >>= \(Colour col) -> updateLayer n (drawPoint renderer (cam pos) col)
             else
-                updateLayer n (drawPoint renderer p (cam pos) (V4 0 0 0 255))
+                updateLayer n (drawPoint renderer (cam pos) (V4 0 0 0 255))
         Line l -> getMaybe e (Proxy @IsVisible) >>= \res -> when (isNothing res || (let IsVisible visible = fromJust res in visible)) $ do
             IsVisible b <- get e
             when (isInView pos (lineX l, lineY l) && b) $ exists e (Proxy @Colour) >>= \c' -> if c' then
@@ -143,22 +143,25 @@ draw renderer fps = do
         forM_ [0..(count - 1)] $ \j -> do
             join $ liftIO $ MV.read buf j -- Execute the drawing command
 
+-- | Draw a line given its 'RenLine', 'Position' and colour
 drawLine :: SDL.Renderer -> RenLine -> V2 Float -> V4 Word8 -> System w ()
 drawLine r l pos col = do
     SDL.rendererDrawColor r SDL.$= col
     SDL.drawLine r (SDL.P $ floor <$> pos) (SDL.P $ floor <$> (pos + V2 (lineX l) (lineY l)))
 
-drawPoint :: SDL.Renderer -> RenPoint -> V2 Float -> V4 Word8 -> System w ()
-drawPoint r p pos col = do
+-- | Draw a point given its 'Position' and colour
+drawPoint :: SDL.Renderer -> V2 Float -> V4 Word8 -> System w ()
+drawPoint r pos col = do
     SDL.rendererDrawColor r SDL.$= col
     SDL.drawPoint r (SDL.P $ floor <$> pos)
 
+-- | Draw a rectangle outline given its 'RenRectangle', 'Position' and colour
 drawRect :: SDL.Renderer -> RenRectangle -> V2 Float -> V4 Word8 -> System w ()
 drawRect r rect pos col = do
     SDL.rendererDrawColor r SDL.$= col
     SDL.drawRect r $ Just (SDL.Rectangle (SDL.P (floor <$> pos)) (floor <$> rectSize rect))
 
-
+-- | Draw a filled rectangle given its 'RenRectangle', 'Position' and colour
 drawFilledRect :: SDL.Renderer -> RenRectangle -> V2 Float -> V4 Word8 -> System w ()
 drawFilledRect r rect pos col = do
     SDL.rendererDrawColor r SDL.$= col

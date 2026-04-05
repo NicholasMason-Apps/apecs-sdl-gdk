@@ -100,9 +100,11 @@ instance Component Layer where type Storage Layer = Map Layer
 newtype IsVisible = IsVisible Bool deriving (Show, Eq)
 instance Component IsVisible where type Storage IsVisible = Map IsVisible
 
+-- | Position component of an entity within the game world. Required for rendering
 newtype Position = Position (V2 Float) deriving (Show, Eq)
 instance Component Position where type Storage Position = Map Position
 
+-- | Global camera component. Stores a function which transforms a position in the game world to a position on the screen.
 newtype Camera = Camera { camFunc :: V2 Float -> V2 Float }
 instance Semigroup Camera where
     (Camera f1) <> (Camera f2) = Camera $ \pos -> f1 (f2 pos)
@@ -110,6 +112,7 @@ instance Monoid Camera where
     mempty = Camera id
 instance Component Camera where type Storage Camera = Global Camera
 
+-- | Total time elapsed since the start of the game
 newtype Time = Time Float deriving (Show, Eq, Num)
 instance Semigroup Time where
     (Time t1) <> (Time t2) = Time (t1 + t2)
@@ -117,6 +120,7 @@ instance Monoid Time where
     mempty = Time 0
 instance Component Time where type Storage Time = Global Time
 
+-- | Renderer context stored in a Component
 newtype Renderer = Renderer (Maybe SDL.Renderer)
 instance Semigroup Renderer where
     (Renderer r1) <> (Renderer _) = Renderer r1
@@ -124,6 +128,7 @@ instance Monoid Renderer where
     mempty = Renderer Nothing
 instance Component Renderer where type Storage Renderer = Global Renderer
 
+-- | Window context stored in a Component
 newtype Window = Window (Maybe SDL.Window)
 instance Semigroup Window where
     (<>) :: Window -> Window -> Window
