@@ -13,7 +13,7 @@ Below is a high-level overview of what `cadence` currently provides:`
 ## Links
 
 Below are links to help people get familiar with the package and what it provides, as well as Apecs and SDL:
-- [Documentation](URL)
+- [Documentation](https://hackage.haskell.org/package/cadence/docs/Cadence.html)
 - [Tutorial](https://github.com/NicholasMason-Apps/cadence/blob/main/examples/naughts-and-crosses.md)
 - [Apecs hackage page](https://hackage.haskell.org/package/apecs)
 - [SDL2 hackage page](https://hackage.haskell.org/package/sdl2)
