@@ -110,6 +110,7 @@ run w r window step eventHandler draw = do
     SDL.quit
     exitSuccess
 
+-- | Template Haskell function to generate the world type and instances for the given component types. See the [Apecs documentation](https://hackage.haskell.org/package/apecs-0.9.6/docs/Apecs.html#v:makeWorld) for more details.
 makeWorld' :: [Name] -> Q [Dec]
 makeWorld' cTypes = makeWorld "World" (cTypes ++ [''TextureMap
                                                  , ''FontMap
