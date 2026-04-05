@@ -6,7 +6,7 @@ cabal-version: 2.2
 
 name:           cadence
 version:        0.1.0.0
-synopsis:       Short description of your package
+synopsis:       An ECS-based 2D game framework
 description:    Please see the README on GitHub at <https://github.com/NicholasMason-Apps/cadence#readme>
 category:       Game, Game Engine
 homepage:       https://github.com/NicholasMason-Apps/cadence#readme
