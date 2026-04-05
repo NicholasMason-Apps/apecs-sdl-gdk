@@ -6,7 +6,7 @@ module Cadence (
     initialise, run, makeWorld', getMaybe,
 
     -- * Texture
-    Animation(..), TextureMap(..), RenTexture(..), loadTexture,
+    TextureData(..), Animation(..), TextureMap(..), RenTexture(..), loadTexture,
 
     -- * Font
     FontMap(..), RenText(..), loadFont,
