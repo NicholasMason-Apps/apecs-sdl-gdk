@@ -19,6 +19,7 @@ data TextureData = TextureData
     , animation :: Maybe Animation
     } deriving (Eq)
 
+-- | Animation data for animated textures
 data Animation = Animation
     { frameCount :: Int
     -- ^ Total number of frames in the animation
