@@ -17,6 +17,7 @@ instance Monoid FontMap where
     mempty = FontMap Map.empty
 instance Component FontMap where type Storage FontMap = Global FontMap
 
+-- | Represents a text element for rendering
 data RenText = RenText
     { fontRef :: String
     , displayText :: String
