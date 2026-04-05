@@ -3,10 +3,10 @@ module Cadence (
     Config(..), Renderable(..), FPS, Position(..), Time(..), Renderer(..), Window(..), TargetFPS(..), RenPoint(..), RenRectangle(..), RenLine(..), Camera(..), Colour(..), Layer(..), IsVisible(..), defaultConfig,
 
     -- * Systems
-    initialise, run, makeWorld', stepAnimations, getMaybe,
+    initialise, run, makeWorld', getMaybe,
 
     -- * Texture
-    TextureData(..), Animation(..), TextureMap(..), RenTexture(..), loadTexture,
+    Animation(..), TextureMap(..), RenTexture(..), loadTexture,
 
     -- * Font
     FontMap(..), RenText(..), loadFont,
