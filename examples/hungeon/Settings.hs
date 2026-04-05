@@ -20,8 +20,7 @@ import Data.List (isInfixOf)
 import Utils (startTransition)
 import qualified SDL
 import Data.Maybe (isJust)
-import Cadence.Texture
-import Cadence.Types
+import Cadence
 
 stepSettings :: Float -> System' ()
 stepSettings dT = do

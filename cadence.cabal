@@ -25,6 +25,7 @@ source-repository head
 
 library
   exposed-modules:
+      Cadence
       Cadence.Draw
       Cadence.Font
       Cadence.Systems

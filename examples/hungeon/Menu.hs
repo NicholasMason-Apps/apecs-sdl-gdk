@@ -19,8 +19,7 @@ import Data.List (isInfixOf)
 import Data.Aeson
 import qualified SDL
 import qualified Data.ByteString.Lazy as BL
-import Cadence.Types
-import Cadence.Texture
+import Cadence
 
 stepMenu :: Float -> System' ()
 stepMenu dT = do

@@ -17,12 +17,9 @@ import qualified Data.Set as Set
 import Utils
 import Data.Foldable (foldl')
 import Data.Maybe
-import qualified Data.Map as Map
 import Control.Monad
-import qualified SDL
 import Enemy
-import Cadence.Types
-import Cadence.Texture
+import Cadence
 
 handleEnemyCollisions :: Float -> System' ()
 handleEnemyCollisions dT = cmapM_ $ \(Player, Position posP, v, bbp) -> do

@@ -13,8 +13,7 @@
 
 module Types where
 
-import Cadence.Systems
-import Cadence.Types
+import Cadence
 import Apecs
 import Linear
 import qualified Data.Set as Set

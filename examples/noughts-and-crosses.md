@@ -35,13 +35,10 @@ Next, we need some imports. To work with Apecs and create some game logic, we si
 import Apecs
 ```
 
-Following this, we import `cadence`. The only thing to note here is that, since we will also reuse the `initialise` function name later on, we also import `Cadence.Systems` qualified.
+Following this, we import `cadence` at the top-level, which re-exports everything for us.
 
 ```haskell
-import Cadence.Systems hiding (initialise)
-import qualified Cadence.Systems as Cadence
-import Cadence.Types
-import Cadence.Draw
+import Cadence
 ```
 
 Next we want to import `linear` for working with multi-dimensional vectors.
@@ -310,8 +307,8 @@ The only notable configuration here is the window dimensions. For the sake of th
 Now we will start writing our first system!
 
 ```haskell
-initialise :: System' ()
-initialise = do
+initialise' :: System' ()
+initialise' = do
     let rly = RenLine { lineX = 0, lineY = 600 }
         rlx = RenLine { lineY = 0, lineX = 600}
     line1 <- newEntity (Line rly, Position (V2 200 0), Colour (V4 0 0 0 255), Layer 0, IsVisible True)
@@ -320,7 +317,7 @@ initialise = do
     void $ newEntity (Line rlx, Position (V2 0 400), Colour (V4 0 0 0 255), Layer 0, IsVisible True)
 ```
 
-`initialise`, as the name suggests, initialises what we need for our game world. Due to each `Global` component having a `Monoid` instance, their initial value is taken care of for us. Therefore, all we need to do is set up the visual game board by creating lines to be rendered. This is done by:
+`initialise'`, as the name suggests, initialises what we need for our game world. Due to each `Global` component having a `Monoid` instance, their initial value is taken care of for us. Therefore, all we need to do is set up the visual game board by creating lines to be rendered. This is done by:
 
 - Using the `Renderable` and `Position` components, we create two vertical and horizontal lines.
 - We also tag each Entity with a Colour component to set it black, make them visible, and render them on the 0th layer
@@ -560,7 +557,7 @@ It is important to note that, when destroying an Entity, make sure to specify **
 stepReset :: Float -> System' ()
 stepReset dt = do
     cmap $ \(_ :: Renderable, Position _) -> (Nothing :: Maybe (Renderable, Position))
-    initialise
+    initialise'
     modify global $ \(_ :: Board) -> mempty :: Board
     modify global $ \(_ :: Turn) -> PlayerTurn
 ```
@@ -621,8 +618,8 @@ Our `main :: IO ()` function is the entrypoint into our program, and is used to 
 main :: IO ()
 main = do
     w <- initWorld
-    runWith w initialise
-    (window, renderer) <- Cadence.initialise w config
+    runWith w initialise'
+    (window, renderer) <- initialise w config
     run w renderer window step handlePayload draw
 ```
 

@@ -34,9 +34,7 @@ import Data.Foldable
 import Data.Aeson
 import qualified Data.ByteString.Lazy as BL
 import qualified SDL
-import Cadence.Font
-import Cadence.Types
-import Cadence.Texture
+import Cadence
 
 -- Initialise the game state by creating a player entity
 initialize :: SDL.Renderer -> System' ()

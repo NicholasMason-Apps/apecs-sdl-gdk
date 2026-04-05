@@ -16,8 +16,7 @@ import Linear
 import Types
 import Utils
 import Data.Maybe ( isNothing )
-import Cadence.Types
-import Cadence.Texture
+import Cadence
 
 enemyAggroRange :: Float
 enemyAggroRange = 175.0

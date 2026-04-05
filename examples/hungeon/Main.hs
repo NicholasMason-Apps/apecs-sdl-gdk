@@ -1,15 +1,13 @@
 module Main (main) where
 
-import Cadence.Systems
 import Apecs
 import Types
 import Systems
-import Cadence.Types
 import Linear
 import qualified SDL
 import Control.Monad (when)
-import Cadence.Draw
 import Input
+import Cadence
 
 main :: IO ()
 main = do

@@ -15,10 +15,9 @@ import Linear
 import qualified Data.Map as Map
 import qualified Data.Vector  as V
 import Apecs
-import Cadence.Types
 import Control.Monad
 import Data.Maybe ( fromMaybe )
-import Cadence.Texture
+import Cadence
 
 combatPlayerPos :: V2 Float
 combatPlayerPos = V2 213 (-360)
